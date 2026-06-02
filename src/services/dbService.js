@@ -49,6 +49,7 @@ const INITIAL_ITEMS = [
     images: ['/mock_item_blocks.png'],
     category: '교구/완구',
     tradeLocation: '동숭교회 로비 앞',
+    type: 'give',
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
   },
   {
@@ -61,6 +62,7 @@ const INITIAL_ITEMS = [
     images: ['/mock_item_books.png'],
     category: '아동 도서',
     tradeLocation: '혜화역 2번 출구',
+    type: 'give',
     createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day ago
   },
   {
@@ -73,6 +75,7 @@ const INITIAL_ITEMS = [
     images: ['/mock_item_stroller.png'],
     category: '유아용품',
     tradeLocation: '동숭교회 지하 주차장',
+    type: 'give',
     createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() // 6 hours ago
   },
   {
@@ -85,7 +88,34 @@ const INITIAL_ITEMS = [
     images: ['/mock_item_highchair.png'],
     category: '가구/식기',
     tradeLocation: '역삼역 3번 출구 근처',
+    type: 'give',
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+  },
+  {
+    id: 'item-5',
+    title: '아기 보행기 구합니다!',
+    sellerId: 'user1@example.com',
+    sellerName: '김사랑',
+    sellerParish: '1교구',
+    description: '아이가 이제 기어 다니기 시작해서 보행기를 태워보려고 합니다. 한두 달만 쓰고 다시 나눔해드리거나 사례하겠습니다. 드림해주실 분 계시면 연락 부탁드립니다! 소정의 선물로 커피 쿠폰 드릴게요.',
+    images: [],
+    category: '유아용품',
+    tradeLocation: '동숭교회 로비 앞',
+    type: 'receive',
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() // 3 hours ago
+  },
+  {
+    id: 'item-6',
+    title: '초등 저학년용 영어 동화책 구해요',
+    sellerId: 'user2@example.com',
+    sellerName: '박소망',
+    sellerParish: '2교구',
+    description: '아이가 영어 글자를 읽기 시작해서 저학년 수준의 쉽고 재미있는 영어 동화책 세트 구합니다. 다 읽고 방치 중인 책이나 낱권도 환영합니다. 나눔해주시면 정말 감사하겠습니다.',
+    images: [],
+    category: '아동 도서',
+    tradeLocation: '혜화역 2번 출구 앞',
+    type: 'receive',
+    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() // 1 hour ago
   }
 ];
 
@@ -111,7 +141,7 @@ const INITIAL_CHATS = [
 ];
 
 const DB_VERSION_KEY = 'market_db_version';
-const CURRENT_DB_VERSION = 'v2_numeric_parish';
+const CURRENT_DB_VERSION = 'v3_wishlist';
 
 // Helper to initialize DB
 export const initDB = () => {

@@ -711,3 +711,56 @@
   color: var(--text-tertiary);
   font-size: 14px;
 }
+
+/* Feed Type Toggle Selector (나눠요 vs 구해요) */
+.feed-type-tabs {
+  display: flex;
+  background-color: var(--bg-tertiary);
+  padding: 4px;
+  border-radius: var(--border-radius-md);
+  margin-bottom: 16px;
+  gap: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.feed-type-tab {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+}
+
+.feed-type-tab.active {
+  background-color: var(--bg-primary);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.feed-type-tab:focus {
+  outline: none;
+}
+
+/* Card Placeholder for no-image posts (Requests) */
+.item-card-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  padding: 12px;
+  text-align: center;
+}
+

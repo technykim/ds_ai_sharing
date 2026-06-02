@@ -34,6 +34,7 @@ function App() {
   const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [feedType, setFeedType] = useState('give'); // 'give' (나눠요) or 'receive' (구해요)
 
   // Detail page states
   const [activeItemId, setActiveItemId] = useState(null);
@@ -51,6 +52,7 @@ function App() {
 
   // Registration states
   const [newItemForm, setNewItemForm] = useState({
+    type: 'give', // 'give' or 'receive'
     title: '',
     category: '교구/완구',
     description: '',
@@ -211,6 +213,7 @@ function App() {
     try {
       db.createItem(newItemForm);
       setNewItemForm({
+        type: 'give',
         title: '',
         category: '교구/완구',
         description: '',
@@ -281,10 +284,11 @@ function App() {
 
   // Filtering Logic
   const filteredItems = items.filter(item => {
+    const matchesFeedType = (item.type || 'give') === feedType;
     const matchesCategory = selectedCategory === '전체' || item.category === selectedCategory;
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesFeedType && matchesCategory && matchesSearch;
   });
 
   const categories = ['전체', '교구/완구', '아동 도서', '유아용품', '가구/식기', '기타'];
@@ -303,9 +307,9 @@ function App() {
         <div className="app-content auth-screen animate-fade-in">
           <div className="auth-header">
             <div className="auth-logo" style={{ overflow: 'hidden', padding: '6px', backgroundColor: '#ffffff' }}>
-              <img src="/favicon.ico" alt="동숭나눔터 로고" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/favicon.ico" alt="동숭교회 나눔터 로고" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
-            <h1 className="auth-title">동숭나눔터</h1>
+            <h1 className="auth-title">동숭교회 나눔터</h1>
             <p className="auth-subtitle">우리 교구 이웃들과 함께하는 따뜻한 나눔</p>
           </div>
           <div className="auth-card">
@@ -452,7 +456,7 @@ function App() {
               </button>
             ) : (
               <div className="header-title" style={{ display: 'flex', alignItems: 'center' }}>
-                <img src="/favicon.ico" alt="" style={{ width: '22px', height: '22px', marginRight: '6px', objectFit: 'contain' }} /> 동숭나눔터
+                <img src="/favicon.ico" alt="" style={{ width: '22px', height: '22px', marginRight: '6px', objectFit: 'contain' }} /> 동숭교회 나눔터
               </div>
             )}
 
@@ -515,11 +519,29 @@ function App() {
                     <input 
                       type="text" 
                       className="search-field" 
-                      placeholder="나누고 싶은 물건을 검색하세요..."
+                      placeholder={feedType === 'give' ? "나누고 싶은 물건을 검색하세요..." : "필요한 물건을 검색하세요..."}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
+                </div>
+
+                {/* Feed Type Selector */}
+                <div className="feed-type-tabs">
+                  <button 
+                    type="button"
+                    className={`feed-type-tab ${feedType === 'give' ? 'active' : ''}`}
+                    onClick={() => { setFeedType('give'); setSelectedCategory('전체'); }}
+                  >
+                    🤝 나눠요 (드림)
+                  </button>
+                  <button 
+                    type="button"
+                    className={`feed-type-tab ${feedType === 'receive' ? 'active' : ''}`}
+                    onClick={() => { setFeedType('receive'); setSelectedCategory('전체'); }}
+                  >
+                    🔍 구해요 (필요)
+                  </button>
                 </div>
 
                 {/* Categories Tab bar */}
@@ -551,12 +573,21 @@ function App() {
                           }}
                         >
                           <div className="item-card-img-wrapper">
-                            <img 
-                              src={item.images[0] || '/mock_item_blocks.png'} 
-                              alt={item.title} 
-                              className="item-card-img" 
-                            />
-                            <div className="item-card-badge">{item.category}</div>
+                            {item.images && item.images.length > 0 ? (
+                              <img 
+                                src={item.images[0]} 
+                                alt={item.title} 
+                                className="item-card-img" 
+                              />
+                            ) : (
+                              <div className="item-card-placeholder">
+                                <span style={{ fontSize: '32px' }}>🙋🏻‍♀️</span>
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--primary)', marginTop: '6px' }}>구해요 (위시리스트)</span>
+                              </div>
+                            )}
+                            <div className="item-card-badge" style={{ backgroundColor: item.type === 'receive' ? 'var(--accent)' : 'var(--primary)' }}>
+                              {item.type === 'receive' ? '구해요' : item.category}
+                            </div>
                             <button 
                               className="item-card-fav"
                               onClick={(e) => handleToggleFav(item.id, e)}
@@ -571,7 +602,9 @@ function App() {
                               {item.sellerParish} • {item.sellerName}
                             </div>
                             <div className="item-card-footer">
-                              <span className="item-card-status">무료 나눔</span>
+                              <span className="item-card-status" style={{ backgroundColor: item.type === 'receive' ? 'var(--accent-light)' : 'var(--primary-light)', color: item.type === 'receive' ? 'var(--accent)' : 'var(--primary)' }}>
+                                {item.type === 'receive' ? '필요해요' : '무료 나눔'}
+                              </span>
                               <span className="item-card-time">{getRelativeTime(item.createdAt)}</span>
                             </div>
                           </div>
@@ -581,7 +614,7 @@ function App() {
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)' }}>
-                    등록된 나눔 물건이 없습니다.
+                    등록된 {feedType === 'give' ? '나눔' : '필요'} 물건이 없습니다.
                   </div>
                 )}
 
@@ -846,7 +879,29 @@ function App() {
             {currentView === 'register-item' && (
               <form onSubmit={handleRegisterItem} className="animate-slide-up" style={{ paddingBottom: '40px' }}>
                 <div className="form-group">
-                  <label className="form-label">물건 사진 등록 (최대 5장)</label>
+                  <label className="form-label">등록 구분</label>
+                  <div className="feed-type-tabs" style={{ marginBottom: '0' }}>
+                    <button 
+                      type="button"
+                      className={`feed-type-tab ${newItemForm.type === 'give' ? 'active' : ''}`}
+                      onClick={() => setNewItemForm({...newItemForm, type: 'give'})}
+                    >
+                      🤝 나눠요 (드림)
+                    </button>
+                    <button 
+                      type="button"
+                      className={`feed-type-tab ${newItemForm.type === 'receive' ? 'active' : ''}`}
+                      onClick={() => setNewItemForm({...newItemForm, type: 'receive'})}
+                    >
+                      🔍 구해요 (필요)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    물건 사진 등록 {newItemForm.type === 'receive' ? '(선택사항, 최대 5장)' : '(최대 5장)'}
+                  </label>
                   <div className="photo-upload-container">
                     {/* Add Photo Button (only if < 5) */}
                     {newItemForm.images.length < 5 && (
@@ -884,7 +939,7 @@ function App() {
                   <input 
                     type="text" 
                     className="form-input" 
-                    placeholder="예: 리안 아기 유모차 드림합니다"
+                    placeholder={newItemForm.type === 'receive' ? "예: 아기 보행기 구합니다!" : "예: 리안 아기 유모차 드림합니다"}
                     value={newItemForm.title}
                     onChange={(e) => setNewItemForm({...newItemForm, title: e.target.value})}
                     required 
@@ -923,7 +978,7 @@ function App() {
                   <textarea 
                     className="form-input" 
                     rows="6"
-                    placeholder="물건의 상태, 사용 기간, 거래 방법(예: 비대면 문고리 거래) 등을 구체적으로 남겨주세요."
+                    placeholder={newItemForm.type === 'receive' ? "구하는 물건의 모델명, 원하는 상태, 대여 혹은 양도 등 희망 거래 방식 등을 구체적으로 남겨주세요." : "물건의 상태, 사용 기간, 거래 방법(예: 비대면 문고리 거래) 등을 구체적으로 남겨주세요."}
                     style={{ resize: 'none', lineHeight: '1.5' }}
                     value={newItemForm.description}
                     onChange={(e) => setNewItemForm({...newItemForm, description: e.target.value})}
@@ -931,7 +986,9 @@ function App() {
                   ></textarea>
                 </div>
 
-                <button type="submit" className="btn btn-primary" style={{ marginTop: '16px' }}>나눔 글 등록 완료</button>
+                <button type="submit" className="btn btn-primary" style={{ marginTop: '16px' }}>
+                  {newItemForm.type === 'receive' ? '위시리스트 등록 완료' : '나눔 글 등록 완료'}
+                </button>
               </form>
             )}
 
@@ -951,8 +1008,10 @@ function App() {
                         </div>
                       ))
                     ) : (
-                      <div className="carousel-slide">
-                        <img src="/mock_item_blocks.png" alt={activeItem.title} />
+                      <div className="carousel-slide" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--primary-light)', height: '100%', padding: '20px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '64px', marginBottom: '12px' }}>🙋🏻‍♀️</span>
+                        <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--primary)' }}>이웃의 도움이 필요한 물건입니다</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>사진은 참고용으로 생략되었습니다.</span>
                       </div>
                     )}
                   </div>
@@ -973,8 +1032,8 @@ function App() {
 
                 {/* Header item info */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: '600', backgroundColor: 'var(--primary-light)', padding: '2px 8px', borderRadius: '4px' }}>
-                    {activeItem.category}
+                  <span style={{ fontSize: '12px', color: activeItem.type === 'receive' ? 'var(--accent)' : 'var(--primary)', fontWeight: '600', backgroundColor: activeItem.type === 'receive' ? 'var(--accent-light)' : 'var(--primary-light)', padding: '2px 8px', borderRadius: '4px' }}>
+                    {activeItem.type === 'receive' ? '구해요 • ' : ''}{activeItem.category}
                   </span>
                   <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{getRelativeTime(activeItem.createdAt)}</span>
                 </div>
@@ -1034,11 +1093,11 @@ function App() {
                   
                   {activeItem.sellerId === currentUser.email ? (
                     <button className="btn btn-secondary" style={{ flex: 1, cursor: 'default' }} disabled>
-                      내가 올린 나눔 상품
+                      {activeItem.type === 'receive' ? '내가 올린 위시리스트' : '내가 올린 나눔 상품'}
                     </button>
                   ) : (
                     <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handleStartChat(activeItem)}>
-                      이웃과 채팅하기
+                      {activeItem.type === 'receive' ? '나눔 제안하기' : '이웃과 채팅하기'}
                     </button>
                   )}
                 </div>
