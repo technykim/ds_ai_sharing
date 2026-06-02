@@ -302,7 +302,9 @@ function App() {
       {currentView === 'login' && (
         <div className="app-content auth-screen animate-fade-in">
           <div className="auth-header">
-            <div className="auth-logo">🎁</div>
+            <div className="auth-logo" style={{ overflow: 'hidden', padding: '6px', backgroundColor: '#ffffff' }}>
+              <img src="/favicon.ico" alt="동숭나눔터 로고" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
             <h1 className="auth-title">동숭나눔터</h1>
             <p className="auth-subtitle">우리 교구 이웃들과 함께하는 따뜻한 나눔</p>
           </div>
@@ -449,8 +451,8 @@ function App() {
                 <ArrowLeftIcon />
               </button>
             ) : (
-              <div className="header-title">
-                <span style={{ fontSize: '20px' }}>🎁</span> 동숭나눔터
+              <div className="header-title" style={{ display: 'flex', alignItems: 'center' }}>
+                <img src="/favicon.ico" alt="" style={{ width: '22px', height: '22px', marginRight: '6px', objectFit: 'contain' }} /> 동숭나눔터
               </div>
             )}
 
