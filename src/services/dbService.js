@@ -16,7 +16,8 @@ const INITIAL_USERS = [
     nickname: '사랑지기',
     parish: '1교구',
     address: '서울시 강남구 역삼동 123-45',
-    contact: '010-1234-5678'
+    contact: '010-1234-5678',
+    isVerified: true
   },
   {
     email: 'user2@example.com',
@@ -25,7 +26,8 @@ const INITIAL_USERS = [
     nickname: '소망나누미',
     parish: '2교구',
     address: '서울시 마포구 합정동 98-7',
-    contact: '010-8765-4321'
+    contact: '010-8765-4321',
+    isVerified: true
   },
   {
     email: 'user3@example.com',
@@ -34,7 +36,8 @@ const INITIAL_USERS = [
     nickname: '믿음가득',
     parish: '3교구',
     address: '서울시 성동구 성수동 45-6',
-    contact: '010-5678-1234'
+    contact: '010-5678-1234',
+    isVerified: true
   }
 ];
 
@@ -116,6 +119,32 @@ const INITIAL_ITEMS = [
     tradeLocation: '혜화역 2번 출구 앞',
     type: 'receive',
     createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() // 1 hour ago
+  },
+  {
+    id: 'item-7',
+    title: '성경책 나눔 합니다',
+    sellerId: 'user1@example.com',
+    sellerName: '김사랑',
+    sellerParish: '1교구',
+    description: '새 성경책을 선물 받게 되어 기존에 보던 성경책을 깨끗하게 나눔합니다. 가죽 커버 상태 좋고 낙서나 밑줄 거의 없습니다. 필요하신 분 가져가세요. 예배 시간 전후로 동숭교회 로비에서 전달 가능합니다.',
+    images: ['/mock_item_bible.png'],
+    category: '기타',
+    tradeLocation: '동숭교회 로비 앞',
+    type: 'give',
+    createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString() // 40 mins ago
+  },
+  {
+    id: 'item-8',
+    title: '십자가 목걸이 나눔 합니다',
+    sellerId: 'user3@example.com',
+    sellerName: '이믿음',
+    sellerParish: '3교구',
+    description: '은으로 된 십자가 목걸이입니다. 최근에 은 세척을 마쳐서 새것처럼 깨끗하고 반짝입니다. 작은 선물 상자도 함께 나눔해 드려요. 유용하게 착용하실 분 연락주세요.',
+    images: ['/mock_item_necklace.png'],
+    category: '기타',
+    tradeLocation: '동숭교회 지하 주차장',
+    type: 'give',
+    createdAt: new Date(Date.now() - 20 * 60 * 1000).toISOString() // 20 mins ago
   }
 ];
 
@@ -141,7 +170,7 @@ const INITIAL_CHATS = [
 ];
 
 const DB_VERSION_KEY = 'market_db_version';
-const CURRENT_DB_VERSION = 'v3_wishlist';
+const CURRENT_DB_VERSION = 'v4_church_verification';
 
 // Helper to initialize DB
 export const initDB = () => {
@@ -370,7 +399,6 @@ export const getOrCreateChatRoom = (itemId, buyerId) => {
   
   const users = getUsers();
   const seller = users.find(u => u.email === item.sellerId);
-  const buyer = users.find(u => u.email === buyerId);
   
   return {
     roomKey,

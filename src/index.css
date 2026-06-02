@@ -426,3 +426,19 @@ p { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
 .animate-fade-in {
   animation: fadeIn 0.25s ease-out forwards;
 }
+
+/* Verified Member Badge */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--primary-light);
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-left: 5px;
+  border: 1px solid rgba(61, 106, 75, 0.15);
+  vertical-align: middle;
+}
+

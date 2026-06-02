@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import * as db from './services/dbService';
 import {
@@ -69,7 +69,8 @@ function App() {
     nickname: '',
     parish: '1교구',
     address: '',
-    contact: ''
+    contact: '',
+    isVerified: false
   });
   const [authError, setAuthError] = useState('');
 
@@ -78,6 +79,7 @@ function App() {
   // Load items from local storage whenever view changes or on init
   useEffect(() => {
     if (currentUser) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setItems(db.getItems());
       setChatRooms(db.getChatRoomsForUser(currentUser.email));
     }
@@ -138,7 +140,8 @@ function App() {
         nickname: '',
         parish: '1교구',
         address: '',
-        contact: ''
+        contact: '',
+        isVerified: false
       });
       setAuthError('');
       setViewHistory(['home']);
@@ -237,7 +240,7 @@ function App() {
   // Favorite handler
   const handleToggleFav = (itemId, e) => {
     if (e) e.stopPropagation();
-    const updatedFavs = db.toggleFavorite(currentUser.email, itemId);
+    db.toggleFavorite(currentUser.email, itemId);
     // Trigger render update
     setItems(db.getItems());
   };
@@ -413,15 +416,33 @@ function App() {
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">연락처</label>
-                <input 
-                  type="tel" 
-                  className="form-input" 
-                  placeholder="010-XXXX-XXXX"
-                  value={signupForm.contact}
-                  onChange={(e) => setSignupForm({...signupForm, contact: e.target.value})}
-                  required 
-                />
+                <label className="form-label">연락처 및 교인인증</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="tel" 
+                    className="form-input" 
+                    placeholder="010-XXXX-XXXX"
+                    value={signupForm.contact}
+                    onChange={(e) => setSignupForm({...signupForm, contact: e.target.value})}
+                    required 
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ width: 'auto', whiteSpace: 'nowrap', padding: '0 16px', borderRadius: 'var(--border-radius-md)' }}
+                    onClick={() => {
+                      if (!signupForm.contact.trim()) {
+                        alert('전화번호를 먼저 입력해 주세요.');
+                        return;
+                      }
+                      setSignupForm({...signupForm, isVerified: true});
+                      alert('동숭교회 교인인증이 완료되었습니다.');
+                    }}
+                    disabled={signupForm.isVerified}
+                  >
+                    {signupForm.isVerified ? '인증됨 ✓' : '교인인증'}
+                  </button>
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label">거래 희망 주소</label>
@@ -475,8 +496,10 @@ function App() {
             )}
 
             {currentView === 'chat-room' && activeChatRoom && (
-              <div style={{ fontSize: '15px', fontWeight: '700' }}>
-                {activeChatRoom.counterpartName} ({activeChatRoom.counterpartParish})
+              <div style={{ fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {activeChatRoom.counterpartName}
+                {db.getUser(activeChatRoom.counterpartEmail)?.isVerified && <span className="verified-badge">교인인증</span>}
+                <span style={{ fontSize: '13px', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '4px' }}>({activeChatRoom.counterpartParish})</span>
               </div>
             )}
 
@@ -600,6 +623,7 @@ function App() {
                             <div className="item-card-parish">
                               <MapPinIcon style={{ width: '11px', height: '11px' }} />
                               {item.sellerParish} • {item.sellerName}
+                              {db.getUser(item.sellerId)?.isVerified && <span className="verified-badge">교인인증</span>}
                             </div>
                             <div className="item-card-footer">
                               <span className="item-card-status" style={{ backgroundColor: item.type === 'receive' ? 'var(--accent-light)' : 'var(--primary-light)', color: item.type === 'receive' ? 'var(--accent)' : 'var(--primary)' }}>
@@ -696,7 +720,11 @@ function App() {
                       </div>
                       <div className="chat-list-info">
                         <div className="chat-list-name-time">
-                          <span className="chat-list-name">{room.counterpartName} <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{room.counterpartParish}</span></span>
+                          <span className="chat-list-name">
+                            {room.counterpartName}
+                            {db.getUser(room.counterpartEmail)?.isVerified && <span className="verified-badge" style={{ fontSize: '9px', padding: '1px 4px' }}>교인인증</span>}
+                            <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '6px' }}>{room.counterpartParish}</span>
+                          </span>
                           <span className="chat-list-time">{getRelativeTime(room.lastMessageTime)}</span>
                         </div>
                         <p className="chat-list-preview">{room.lastMessage || '대화방이 개설되었습니다.'}</p>
@@ -724,7 +752,10 @@ function App() {
                     {currentUser.name.substring(0, 1)}
                   </div>
                   <div className="profile-meta-info">
-                    <span className="profile-meta-name">{currentUser.name}</span>
+                    <span className="profile-meta-name" style={{ display: 'flex', alignItems: 'center' }}>
+                      {currentUser.name}
+                      {currentUser.isVerified && <span className="verified-badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.3)' }}>교인인증</span>}
+                    </span>
                     <span className="profile-meta-parish">{currentUser.parish} 소속 이웃</span>
                   </div>
                 </div>
@@ -1058,7 +1089,10 @@ function App() {
                       {activeItem.sellerName.substring(0, 1)}
                     </div>
                     <div>
-                      <div className="seller-name">{activeItem.sellerName}</div>
+                      <div className="seller-name" style={{ display: 'flex', alignItems: 'center' }}>
+                        {activeItem.sellerName}
+                        {db.getUser(activeItem.sellerId)?.isVerified && <span className="verified-badge">교인인증</span>}
+                      </div>
                       <div className="seller-parish">{activeItem.sellerParish} 소속 이웃</div>
                     </div>
                   </div>
@@ -1184,7 +1218,10 @@ function App() {
                           {pUser.name.substring(0, 1)}
                         </div>
                         <div className="profile-meta-info">
-                          <span className="profile-meta-name">{pUser.name}</span>
+                          <span className="profile-meta-name" style={{ display: 'flex', alignItems: 'center' }}>
+                            {pUser.name}
+                            {pUser.isVerified && <span className="verified-badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.3)' }}>교인인증</span>}
+                          </span>
                           <span className="profile-meta-parish">{pUser.parish} 소속 이웃</span>
                         </div>
                       </div>
