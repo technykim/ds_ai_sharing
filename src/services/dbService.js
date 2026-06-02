@@ -110,8 +110,22 @@ const INITIAL_CHATS = [
   }
 ];
 
+const DB_VERSION_KEY = 'market_db_version';
+const CURRENT_DB_VERSION = 'v2_numeric_parish';
+
 // Helper to initialize DB
 export const initDB = () => {
+  const storedVersion = localStorage.getItem(DB_VERSION_KEY);
+  if (storedVersion !== CURRENT_DB_VERSION) {
+    // Force reset local storage keys to apply new database schema (nicknames, numeric parishes, tradeLocation)
+    localStorage.removeItem(KEYS.USERS);
+    localStorage.removeItem(KEYS.ITEMS);
+    localStorage.removeItem(KEYS.FAVORITES);
+    localStorage.removeItem(KEYS.CHATS);
+    localStorage.removeItem(KEYS.CURRENT_USER);
+    localStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION);
+  }
+
   if (!localStorage.getItem(KEYS.USERS)) {
     localStorage.setItem(KEYS.USERS, JSON.stringify(INITIAL_USERS));
   }
