@@ -26,7 +26,7 @@ const INITIAL_USERS = [
     isVerified: true,
     status: 'approved',
     recommenderType: '구역담당목회자',
-    recommenderDetail: ''
+    recommenderDetail: '김은혜 목사'
   },
   {
     email: 'user2@example.com',
@@ -39,7 +39,7 @@ const INITIAL_USERS = [
     isVerified: true,
     status: 'approved',
     recommenderType: '구역장',
-    recommenderDetail: ''
+    recommenderDetail: '최성실 구역장'
   },
   {
     email: 'user3@example.com',
@@ -52,7 +52,7 @@ const INITIAL_USERS = [
     isVerified: true,
     status: 'approved',
     recommenderType: '기존가입자',
-    recommenderDetail: '사랑지기'
+    recommenderDetail: '김사랑'
   }
 ];
 

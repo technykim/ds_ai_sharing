@@ -174,8 +174,8 @@ function App() {
 
   const handleSignup = (e) => {
     e.preventDefault();
-    if (signupForm.recommenderType === '기존가입자' && !signupForm.recommenderDetail.trim()) {
-      setAuthError('추천인의 닉네임을 입력해 주세요.');
+    if (!signupForm.recommenderDetail.trim()) {
+      setAuthError('추천인의 이름을 입력해 주세요.');
       return;
     }
     try {
@@ -640,7 +640,7 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">추천인 선택</label>
+                <label className="form-label">추천인 구분</label>
                 <select 
                   className="form-input"
                   value={signupForm.recommenderType}
@@ -653,19 +653,17 @@ function App() {
                 </select>
               </div>
 
-              {signupForm.recommenderType === '기존가입자' && (
-                <div className="form-group animate-fade-in">
-                  <label className="form-label">추천인 닉네임 (별명)</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="추천해주신 기존가입자의 닉네임을 입력하세요"
-                    value={signupForm.recommenderDetail}
-                    onChange={(e) => setSignupForm({...signupForm, recommenderDetail: e.target.value})}
-                    required 
-                  />
-                </div>
-              )}
+              <div className="form-group">
+                <label className="form-label">추천인 이름</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="추천해주신 분의 이름을 입력하세요"
+                  value={signupForm.recommenderDetail}
+                  onChange={(e) => setSignupForm({...signupForm, recommenderDetail: e.target.value})}
+                  required 
+                />
+              </div>
 
               {authError && <p style={{ color: 'var(--danger)', fontSize: '12px', marginBottom: '16px' }}>{authError}</p>}
               <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>이웃 등록 신청</button>
