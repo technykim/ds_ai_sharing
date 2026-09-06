@@ -258,7 +258,7 @@ function App() {
   const handleRegisterItem = (e) => {
     e.preventDefault();
     if (!newItemForm.title.trim() || !newItemForm.description.trim() || !newItemForm.tradeLocation.trim()) {
-      alert('물건 이름, 설명, 희망거래장소를 모두 작성해주세요.');
+      alert('물건 이름, 설명, 희망거래시간장소를 모두 작성해주세요.');
       return;
     }
 
@@ -1367,11 +1367,11 @@ function App() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">희망 거래 장소</label>
+                  <label className="form-label">희망거래시간장소</label>
                   <input 
                     type="text" 
                     className="form-input" 
-                    placeholder="예: 교회 로비 앞, 혜화역 2번 출구"
+                    placeholder="예: 2부예배 후 교회 앞마당"
                     value={newItemForm.tradeLocation}
                     onChange={(e) => setNewItemForm({...newItemForm, tradeLocation: e.target.value})}
                     required 
@@ -1447,7 +1447,7 @@ function App() {
 
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
                   <MapPinIcon style={{ width: '16px', height: '16px', color: 'var(--primary)' }} />
-                  <span><strong>희망 거래 장소:</strong> {activeItem.tradeLocation || '교구 내 직거래'}</span>
+                  <span><strong>희망거래시간장소:</strong> {activeItem.tradeLocation || '교구 내 직거래'}</span>
                 </div>
 
                 {/* Seller Profile click to seller page */}
