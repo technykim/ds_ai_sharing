@@ -51,7 +51,7 @@ const INITIAL_ITEMS = [
     description: '아이들이 정말 좋아했던 숲소리 원목 교구 블록 세트입니다. 모서리 전부 둥글게 마감되어 있고 천연 원목이라 구강기 아이들이 만져도 안전합니다. 몇 개 분실된 블록이 있어서 무료 나눔합니다. 박스도 함께 드려요.',
     images: ['/mock_item_blocks.png'],
     category: '교구/완구',
-    tradeLocation: '동숭교회 로비 앞',
+    tradeLocation: '교회 로비 앞',
     type: 'give',
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
   },
@@ -77,7 +77,7 @@ const INITIAL_ITEMS = [
     description: '디럭스 유모차입니다. 흔들림이 적어 신생아 태우기 정말 좋고 바퀴 마모 상태도 양호합니다. 사용감은 조금 있으나 매우 튼튼해서 세컨용으로 쓰셔도 좋습니다. 깔끔하게 세탁 완료했습니다.',
     images: ['/mock_item_stroller.png'],
     category: '유아용품',
-    tradeLocation: '동숭교회 지하 주차장',
+    tradeLocation: '교회 지하 주차장',
     type: 'give',
     createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() // 6 hours ago
   },
@@ -103,7 +103,7 @@ const INITIAL_ITEMS = [
     description: '아이가 이제 기어 다니기 시작해서 보행기를 태워보려고 합니다. 한두 달만 쓰고 다시 나눔해드리거나 사례하겠습니다. 드림해주실 분 계시면 연락 부탁드립니다! 소정의 선물로 커피 쿠폰 드릴게요.',
     images: [],
     category: '유아용품',
-    tradeLocation: '동숭교회 로비 앞',
+    tradeLocation: '교회 로비 앞',
     type: 'receive',
     createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() // 3 hours ago
   },
@@ -126,10 +126,10 @@ const INITIAL_ITEMS = [
     sellerId: 'user1@example.com',
     sellerName: '김사랑',
     sellerParish: '1교구',
-    description: '새 성경책을 선물 받게 되어 기존에 보던 성경책을 깨끗하게 나눔합니다. 가죽 커버 상태 좋고 낙서나 밑줄 거의 없습니다. 필요하신 분 가져가세요. 예배 시간 전후로 동숭교회 로비에서 전달 가능합니다.',
+    description: '새 성경책을 선물 받게 되어 기존에 보던 성경책을 깨끗하게 나눔합니다. 가죽 커버 상태 좋고 낙서나 밑줄 거의 없습니다. 필요하신 분 가져가세요. 예배 시간 전후로 교회 로비에서 전달 가능합니다.',
     images: ['/mock_item_bible.png'],
     category: '기타',
-    tradeLocation: '동숭교회 로비 앞',
+    tradeLocation: '교회 로비 앞',
     type: 'give',
     createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString() // 40 mins ago
   },
@@ -142,7 +142,7 @@ const INITIAL_ITEMS = [
     description: '은으로 된 십자가 목걸이입니다. 최근에 은 세척을 마쳐서 새것처럼 깨끗하고 반짝입니다. 작은 선물 상자도 함께 나눔해 드려요. 유용하게 착용하실 분 연락주세요.',
     images: ['/mock_item_necklace.png'],
     category: '기타',
-    tradeLocation: '동숭교회 지하 주차장',
+    tradeLocation: '교회 지하 주차장',
     type: 'give',
     createdAt: new Date(Date.now() - 20 * 60 * 1000).toISOString() // 20 mins ago
   }
@@ -170,7 +170,7 @@ const INITIAL_CHATS = [
 ];
 
 const DB_VERSION_KEY = 'market_db_version';
-const CURRENT_DB_VERSION = 'v4_church_verification';
+const CURRENT_DB_VERSION = 'v5_danggeun_church';
 
 // Helper to initialize DB
 export const initDB = () => {

@@ -310,9 +310,9 @@ function App() {
         <div className="app-content auth-screen animate-fade-in">
           <div className="auth-header">
             <div className="auth-logo" style={{ overflow: 'hidden', padding: '6px', backgroundColor: '#ffffff' }}>
-              <img src="/favicon.ico" alt="동숭교회 나눔터 로고" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/favicon.ico" alt="당근교회지 로고" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
-            <h1 className="auth-title">동숭교회 나눔터</h1>
+            <h1 className="auth-title">당근교회지</h1>
             <p className="auth-subtitle">우리 교구 이웃들과 함께하는 따뜻한 나눔</p>
           </div>
           <div className="auth-card">
@@ -436,7 +436,7 @@ function App() {
                         return;
                       }
                       setSignupForm({...signupForm, isVerified: true});
-                      alert('동숭교회 교인인증이 완료되었습니다.');
+                      alert('교인인증이 완료되었습니다.');
                     }}
                     disabled={signupForm.isVerified}
                   >
@@ -477,7 +477,7 @@ function App() {
               </button>
             ) : (
               <div className="header-title" style={{ display: 'flex', alignItems: 'center' }}>
-                <img src="/favicon.ico" alt="" style={{ width: '22px', height: '22px', marginRight: '6px', objectFit: 'contain' }} /> 동숭교회 나눔터
+                <img src="/favicon.ico" alt="" style={{ width: '22px', height: '22px', marginRight: '6px', objectFit: 'contain' }} /> 당근교회지
               </div>
             )}
 
@@ -997,7 +997,7 @@ function App() {
                   <input 
                     type="text" 
                     className="form-input" 
-                    placeholder="예: 동숭교회 로비 앞, 혜화역 2번 출구"
+                    placeholder="예: 교회 로비 앞, 혜화역 2번 출구"
                     value={newItemForm.tradeLocation}
                     onChange={(e) => setNewItemForm({...newItemForm, tradeLocation: e.target.value})}
                     required 
