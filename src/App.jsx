@@ -756,25 +756,13 @@ function App() {
 
           {/* DYNAMIC VIEW CONTENT */}
           <main className="app-content animate-fade-in">
-            {/* VIEW A: HOME / LISTINGS & GATHERINGS */}
             {currentView === 'home' && (
               <div className="animate-slide-up">
-                {/* TOP SERVICE SWITCHER (나눔 ↔ 모임) */}
-                <div className="service-switcher-bar">
-                  <button 
-                    type="button"
-                    className={`service-switcher-btn ${mainServiceTab === 'nanum' ? 'active' : ''}`}
-                    onClick={() => setMainServiceTab('nanum')}
-                  >
-                    <GiftIcon style={{ width: '16px', height: '16px' }} /> 🎁 물건 나눔
-                  </button>
-                  <button 
-                    type="button"
-                    className={`service-switcher-btn ${mainServiceTab === 'moim' ? 'active' : ''}`}
-                    onClick={() => setMainServiceTab('moim')}
-                  >
-                    <UsersIcon style={{ width: '16px', height: '16px' }} /> 👥 소모임
-                  </button>
+                {/* Service Title Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', padding: '2px 0' }}>
+                  <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {mainServiceTab === 'nanum' ? '🎁 물건 나눔' : '👥 소모임'}
+                  </h2>
                 </div>
 
                 {/* SERVICE 1: NANUM MARKETPLACE */}
