@@ -14,7 +14,10 @@ import {
   PhoneIcon,
   MailIcon,
   LogOutIcon,
-  TrashIcon
+  TrashIcon,
+  UsersIcon,
+  XIcon,
+  GiftIcon
 } from './components/Icons';
 
 function App() {
@@ -74,16 +77,54 @@ function App() {
   });
   const [authError, setAuthError] = useState('');
 
-  const chatEndRef = useRef(null);
+  // Service Switcher State
+  const [mainServiceTab, setMainServiceTab] = useState('nanum'); // 'nanum' or 'moim'
 
-  // Load items from local storage whenever view changes or on init
+  // Gathering States
+  const [gatherings, setGatherings] = useState([]);
+  const [moimCategory, setMoimCategory] = useState('전체');
+  const [activeMoimId, setActiveMoimId] = useState(null);
+  const [moimSubTab, setMoimSubTab] = useState('info'); // 'info', 'notice', 'calendar', 'chat', 'review'
+  
+  // Gathering Registration Form State
+  const [newMoimForm, setNewMoimForm] = useState({
+    title: '',
+    category: '기도모임',
+    shortDesc: '',
+    longDesc: '',
+    images: []
+  });
+
+  // Gathering Sub-features States
+  const [newNoticeContent, setNewNoticeContent] = useState('');
+  const [newEventForm, setNewEventForm] = useState({
+    title: '',
+    date: new Date().toISOString().split('T')[0],
+    time: '19:00',
+    location: '',
+    description: ''
+  });
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [newReviewForm, setNewReviewForm] = useState({
+    content: '',
+    rating: 5,
+    images: []
+  });
+  const [moimChatInput, setMoimChatInput] = useState('');
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+
+  const chatEndRef = useRef(null);
+  const moimChatEndRef = useRef(null);
+
+  // Load items & gatherings from local storage whenever view changes or on init
   useEffect(() => {
     if (currentUser) {
       /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setItems(db.getItems());
       setChatRooms(db.getChatRoomsForUser(currentUser.email));
+      setGatherings(db.getGatherings());
     }
-  }, [currentView, currentUser]);
+  }, [currentView, currentUser, mainServiceTab]);
 
   // Scroll to bottom of chat when messages or active room changes
   useEffect(() => {
@@ -235,6 +276,120 @@ function App() {
       setItems(db.getItems());
       navigateBack();
     }
+  };
+
+  // Gathering Handlers
+  const handleMoimImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    if (newMoimForm.images.length + files.length > 5) {
+      alert('이미지는 최대 5장까지 업로드할 수 있습니다.');
+      return;
+    }
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewMoimForm(prev => ({
+          ...prev,
+          images: [...prev.images, reader.result]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleReviewImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewReviewForm(prev => ({
+          ...prev,
+          images: [...prev.images, reader.result]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleCreateMoim = (e) => {
+    e.preventDefault();
+    if (!newMoimForm.title.trim() || !newMoimForm.shortDesc.trim() || !newMoimForm.longDesc.trim()) {
+      alert('모임 이름과 설명을 입력해주세요.');
+      return;
+    }
+    const created = db.createGathering({
+      ...newMoimForm,
+      leaderId: currentUser.email,
+      leaderName: currentUser.name,
+      leaderParish: currentUser.parish
+    });
+    setGatherings(db.getGatherings());
+    setActiveMoimId(created.id);
+    setMoimSubTab('info');
+    setNewMoimForm({ title: '', category: '기도모임', shortDesc: '', longDesc: '', images: [] });
+    navigateTo('moim-detail');
+  };
+
+  const handleApplyMoim = (moimId) => {
+    db.applyGatheringMember(moimId, currentUser);
+    setGatherings(db.getGatherings());
+    alert('모임 참여 신청이 완료되었습니다. 모임장의 승인을 기다려주세요.');
+  };
+
+  const handleLeaveMoim = (moimId) => {
+    if (window.confirm('정말로 모임에서 탈퇴하시겠습니까?')) {
+      db.leaveGathering(moimId, currentUser.email);
+      setGatherings(db.getGatherings());
+      alert('모임에서 탈퇴되었습니다.');
+    }
+  };
+
+  const handleApproveMember = (moimId, userEmail) => {
+    db.approveGatheringMember(moimId, userEmail);
+    setGatherings(db.getGatherings());
+  };
+
+  const handleRejectMember = (moimId, userEmail) => {
+    db.rejectGatheringMember(moimId, userEmail);
+    setGatherings(db.getGatherings());
+  };
+
+  const handleAddNotice = (moimId, e) => {
+    e.preventDefault();
+    if (!newNoticeContent.trim()) return;
+    db.addGatheringNotice(moimId, currentUser.email, currentUser.name, newNoticeContent);
+    setNewNoticeContent('');
+    setGatherings(db.getGatherings());
+  };
+
+  const handleAddEvent = (moimId, e) => {
+    e.preventDefault();
+    if (!newEventForm.title.trim() || !newEventForm.date) return;
+    db.addGatheringEvent(moimId, newEventForm.title, newEventForm.date, newEventForm.time, newEventForm.location, newEventForm.description);
+    setNewEventForm({ title: '', date: new Date().toISOString().split('T')[0], time: '19:00', location: '', description: '' });
+    setShowAddEventModal(false);
+    setGatherings(db.getGatherings());
+  };
+
+  const handleAddReview = (moimId, e) => {
+    e.preventDefault();
+    if (!newReviewForm.content.trim()) return;
+    db.addGatheringReview(moimId, currentUser.email, currentUser.name, newReviewForm.content, newReviewForm.images, newReviewForm.rating);
+    setNewReviewForm({ content: '', rating: 5, images: [] });
+    setGatherings(db.getGatherings());
+  };
+
+  const handleSendMoimChat = (moimId, e) => {
+    e.preventDefault();
+    if (!moimChatInput.trim()) return;
+    db.sendGatheringMessage(moimId, currentUser.email, currentUser.name, moimChatInput);
+    setMoimChatInput('');
+    setGatherings(db.getGatherings());
   };
 
   // Favorite handler
@@ -471,7 +626,7 @@ function App() {
         <>
           {/* DYNAMIC HEADER */}
           <header className="app-header">
-            {['item-detail', 'register-item', 'chat-room', 'user-profile'].includes(currentView) ? (
+            {['item-detail', 'register-item', 'chat-room', 'user-profile', 'create-moim', 'moim-detail'].includes(currentView) ? (
               <button className="btn-icon" onClick={navigateBack} title="뒤로 가기">
                 <ArrowLeftIcon />
               </button>
@@ -495,6 +650,14 @@ function App() {
               <div style={{ fontSize: '15px', fontWeight: '700' }}>나눔 물건 등록</div>
             )}
 
+            {currentView === 'create-moim' && (
+              <div style={{ fontSize: '15px', fontWeight: '700' }}>새 소모임 개설</div>
+            )}
+
+            {currentView === 'moim-detail' && (
+              <div style={{ fontSize: '15px', fontWeight: '700' }}>소모임 상세 정보</div>
+            )}
+
             {currentView === 'chat-room' && activeChatRoom && (
               <div style={{ fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {activeChatRoom.counterpartName}
@@ -516,7 +679,7 @@ function App() {
             {currentView === 'user-profile' && <div style={{ fontSize: '15px', fontWeight: '700' }}>이웃 프로필</div>}
 
             {/* Home button on the right for sub-views */}
-            {['item-detail', 'register-item', 'chat-room', 'user-profile'].includes(currentView) && (
+            {['item-detail', 'register-item', 'chat-room', 'user-profile', 'create-moim', 'moim-detail'].includes(currentView) && (
               <button 
                 className="btn-icon" 
                 onClick={() => {
@@ -532,120 +695,249 @@ function App() {
 
           {/* DYNAMIC VIEW CONTENT */}
           <main className="app-content animate-fade-in">
-            {/* VIEW A: HOME / LISTINGS */}
+            {/* VIEW A: HOME / LISTINGS & GATHERINGS */}
             {currentView === 'home' && (
               <div className="animate-slide-up">
-                {/* Search Bar */}
-                <div className="search-container">
-                  <div className="search-input-wrapper">
-                    <SearchIcon className="search-input-icon" />
-                    <input 
-                      type="text" 
-                      className="search-field" 
-                      placeholder={feedType === 'give' ? "나누고 싶은 물건을 검색하세요..." : "필요한 물건을 검색하세요..."}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Feed Type Selector */}
-                <div className="feed-type-tabs">
+                {/* TOP SERVICE SWITCHER (나눔 ↔ 모임) */}
+                <div className="service-switcher-bar">
                   <button 
                     type="button"
-                    className={`feed-type-tab ${feedType === 'give' ? 'active' : ''}`}
-                    onClick={() => { setFeedType('give'); setSelectedCategory('전체'); }}
+                    className={`service-switcher-btn ${mainServiceTab === 'nanum' ? 'active' : ''}`}
+                    onClick={() => setMainServiceTab('nanum')}
                   >
-                    🤝 나눠요 (드림)
+                    <GiftIcon style={{ width: '16px', height: '16px' }} /> 🎁 물건 나눔
                   </button>
                   <button 
                     type="button"
-                    className={`feed-type-tab ${feedType === 'receive' ? 'active' : ''}`}
-                    onClick={() => { setFeedType('receive'); setSelectedCategory('전체'); }}
+                    className={`service-switcher-btn ${mainServiceTab === 'moim' ? 'active' : ''}`}
+                    onClick={() => setMainServiceTab('moim')}
                   >
-                    🔍 구해요 (필요)
+                    <UsersIcon style={{ width: '16px', height: '16px' }} /> 👥 소모임
                   </button>
                 </div>
 
-                {/* Categories Tab bar */}
-                <div className="categories-bar">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      className={`category-tab ${selectedCategory === cat ? 'active' : ''}`}
-                      onClick={() => setSelectedCategory(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
+                {/* SERVICE 1: NANUM MARKETPLACE */}
+                {mainServiceTab === 'nanum' && (
+                  <>
+                    {/* Search Bar */}
+                    <div className="search-container">
+                      <div className="search-input-wrapper">
+                        <SearchIcon className="search-input-icon" />
+                        <input 
+                          type="text" 
+                          className="search-field" 
+                          placeholder={feedType === 'give' ? "나누고 싶은 물건을 검색하세요..." : "필요한 물건을 검색하세요..."}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                    </div>
 
-                {/* Items Grid */}
-                {filteredItems.length > 0 ? (
-                  <div className="items-grid">
-                    {filteredItems.map(item => {
-                      const isFav = db.isFavorite(currentUser.email, item.id);
-                      return (
-                        <div 
-                          key={item.id} 
-                          className="item-card" 
-                          onClick={() => {
-                            setActiveItemId(item.id);
-                            setCarouselIndex(0);
-                            navigateTo('item-detail');
-                          }}
+                    {/* Feed Type Selector */}
+                    <div className="feed-type-tabs">
+                      <button 
+                        type="button"
+                        className={`feed-type-tab ${feedType === 'give' ? 'active' : ''}`}
+                        onClick={() => { setFeedType('give'); setSelectedCategory('전체'); }}
+                      >
+                        🤝 나눠요 (드림)
+                      </button>
+                      <button 
+                        type="button"
+                        className={`feed-type-tab ${feedType === 'receive' ? 'active' : ''}`}
+                        onClick={() => { setFeedType('receive'); setSelectedCategory('전체'); }}
+                      >
+                        🔍 구해요 (필요)
+                      </button>
+                    </div>
+
+                    {/* Categories Tab bar */}
+                    <div className="categories-bar">
+                      {categories.map(cat => (
+                        <button
+                          key={cat}
+                          className={`category-tab ${selectedCategory === cat ? 'active' : ''}`}
+                          onClick={() => setSelectedCategory(cat)}
                         >
-                          <div className="item-card-img-wrapper">
-                            {item.images && item.images.length > 0 ? (
-                              <img 
-                                src={item.images[0]} 
-                                alt={item.title} 
-                                className="item-card-img" 
-                              />
-                            ) : (
-                              <div className="item-card-placeholder">
-                                <span style={{ fontSize: '32px' }}>🙋🏻‍♀️</span>
-                                <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--primary)', marginTop: '6px' }}>구해요 (위시리스트)</span>
-                              </div>
-                            )}
-                            <div className="item-card-badge" style={{ backgroundColor: item.type === 'receive' ? 'var(--accent)' : 'var(--primary)' }}>
-                              {item.type === 'receive' ? '구해요' : item.category}
-                            </div>
-                            <button 
-                              className="item-card-fav"
-                              onClick={(e) => handleToggleFav(item.id, e)}
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Items Grid */}
+                    {filteredItems.length > 0 ? (
+                      <div className="items-grid">
+                        {filteredItems.map(item => {
+                          const isFav = db.isFavorite(currentUser.email, item.id);
+                          return (
+                            <div 
+                              key={item.id} 
+                              className="item-card" 
+                              onClick={() => {
+                                setActiveItemId(item.id);
+                                setCarouselIndex(0);
+                                navigateTo('item-detail');
+                              }}
                             >
-                              <HeartIcon fill={isFav} style={{ width: '16px', height: '16px' }} />
-                            </button>
-                          </div>
-                          <div className="item-card-info">
-                            <h3 className="item-card-title">{item.title}</h3>
-                            <div className="item-card-parish">
-                              <MapPinIcon style={{ width: '11px', height: '11px' }} />
-                              {item.sellerParish} • {item.sellerName}
-                              {db.getUser(item.sellerId)?.isVerified && <span className="verified-badge">교인인증</span>}
+                              <div className="item-card-img-wrapper">
+                                {item.images && item.images.length > 0 ? (
+                                  <img 
+                                    src={item.images[0]} 
+                                    alt={item.title} 
+                                    className="item-card-img" 
+                                  />
+                                ) : (
+                                  <div className="item-card-placeholder">
+                                    <span style={{ fontSize: '32px' }}>🙋🏻‍♀️</span>
+                                    <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--primary)', marginTop: '6px' }}>구해요 (위시리스트)</span>
+                                  </div>
+                                )}
+                                <div className="item-card-badge" style={{ backgroundColor: item.type === 'receive' ? 'var(--accent)' : 'var(--primary)' }}>
+                                  {item.type === 'receive' ? '구해요' : item.category}
+                                </div>
+                                <button 
+                                  className="item-card-fav"
+                                  onClick={(e) => handleToggleFav(item.id, e)}
+                                >
+                                  <HeartIcon fill={isFav} style={{ width: '16px', height: '16px' }} />
+                                </button>
+                              </div>
+                              <div className="item-card-info">
+                                <h3 className="item-card-title">{item.title}</h3>
+                                <div className="item-card-parish">
+                                  <MapPinIcon style={{ width: '11px', height: '11px' }} />
+                                  {item.sellerParish} • {item.sellerName}
+                                  {db.getUser(item.sellerId)?.isVerified && <span className="verified-badge">교인인증</span>}
+                                </div>
+                                <div className="item-card-footer">
+                                  <span className="item-card-status" style={{ backgroundColor: item.type === 'receive' ? 'var(--accent-light)' : 'var(--primary-light)', color: item.type === 'receive' ? 'var(--accent)' : 'var(--primary)' }}>
+                                    {item.type === 'receive' ? '필요해요' : '무료 나눔'}
+                                  </span>
+                                  <span className="item-card-time">{getRelativeTime(item.createdAt)}</span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="item-card-footer">
-                              <span className="item-card-status" style={{ backgroundColor: item.type === 'receive' ? 'var(--accent-light)' : 'var(--primary-light)', color: item.type === 'receive' ? 'var(--accent)' : 'var(--primary)' }}>
-                                {item.type === 'receive' ? '필요해요' : '무료 나눔'}
-                              </span>
-                              <span className="item-card-time">{getRelativeTime(item.createdAt)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)' }}>
-                    등록된 {feedType === 'give' ? '나눔' : '필요'} 물건이 없습니다.
-                  </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)' }}>
+                        등록된 {feedType === 'give' ? '나눔' : '필요'} 물건이 없습니다.
+                      </div>
+                    )}
+
+                    {/* Floating Action Button (FAB) for Item */}
+                    <button className="fab" onClick={() => navigateTo('register-item')} title="물건 등록">
+                      <PlusIcon style={{ width: '28px', height: '28px' }} />
+                    </button>
+                  </>
                 )}
 
-                {/* Floating Action Button (FAB) */}
-                <button className="fab" onClick={() => navigateTo('register-item')} title="물건 등록">
-                  <PlusIcon style={{ width: '28px', height: '28px' }} />
-                </button>
+                {/* SERVICE 2: GATHERINGS (소모임) */}
+                {mainServiceTab === 'moim' && (
+                  <div>
+                    {/* Moim Search Bar */}
+                    <div className="search-container">
+                      <div className="search-input-wrapper">
+                        <SearchIcon className="search-input-icon" />
+                        <input 
+                          type="text" 
+                          className="search-field" 
+                          placeholder="소모임 이름을 검색해보세요..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Moim Categories Bar */}
+                    <div className="categories-bar">
+                      {['전체', '기도모임', '운동모임', '취미모임', '성경공부모임', '기타'].map(cat => (
+                        <button
+                          key={cat}
+                          className={`category-tab ${moimCategory === cat ? 'active' : ''}`}
+                          onClick={() => setMoimCategory(cat)}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Create Moim Top Action Button */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => navigateTo('create-moim')}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      >
+                        <PlusIcon style={{ width: '18px', height: '18px' }} /> 새로운 소모임 개설하기
+                      </button>
+                    </div>
+
+                    {/* Moim Cards List */}
+                    {(() => {
+                      const filteredMoims = gatherings.filter(g => {
+                        const matchesCategory = moimCategory === '전체' || g.category === moimCategory;
+                        const matchesSearch = searchQuery === '' || 
+                          g.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          g.shortDesc.toLowerCase().includes(searchQuery.toLowerCase());
+                        return matchesCategory && matchesSearch;
+                      });
+
+                      if (filteredMoims.length === 0) {
+                        return (
+                          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)' }}>
+                            <div style={{ fontSize: '36px', marginBottom: '12px' }}>👥</div>
+                            <p style={{ fontWeight: '500', marginBottom: '4px' }}>등록된 소모임이 없습니다</p>
+                            <p style={{ fontSize: '13px' }}>상단의 '새로운 소모임 개설하기' 버튼을 눌러 첫 모임을 만들어보세요!</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="moim-list">
+                          {filteredMoims.map(moim => {
+                            const members = db.getGatheringMembers(moim.id);
+                            const approvedMembers = members.filter(m => m.status === 'approved');
+                            const leaderUser = db.getUser(moim.leaderId);
+
+                            return (
+                              <div 
+                                key={moim.id} 
+                                className="moim-card"
+                                onClick={() => {
+                                  setActiveMoimId(moim.id);
+                                  setMoimSubTab('info');
+                                  navigateTo('moim-detail');
+                                }}
+                              >
+                                <img 
+                                  src={moim.images && moim.images.length > 0 ? moim.images[0] : '/mock_item_books.png'} 
+                                  alt="" 
+                                  className="moim-card-img" 
+                                />
+                                <div className="moim-card-body">
+                                  <span className="moim-card-category">{moim.category}</span>
+                                  <h3 className="moim-card-title">{moim.title}</h3>
+                                  <p className="moim-card-desc">{moim.shortDesc}</p>
+                                  <div className="moim-card-meta">
+                                    <span>
+                                      리더: {moim.leaderName}
+                                      {leaderUser?.isVerified && <span className="verified-badge">교인인증</span>}
+                                    </span>
+                                    <span style={{ fontWeight: '600', color: 'var(--primary)' }}>
+                                      👥 {approvedMembers.length}명 참여 중
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1293,10 +1585,470 @@ function App() {
                 })()}
               </div>
             )}
+
+            {/* VIEW I: CREATE GATHERING */}
+            {currentView === 'create-moim' && (
+              <div className="animate-slide-up">
+                <div style={{ backgroundColor: 'var(--bg-primary)', padding: '20px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--border-color)' }}>
+                  <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>새 소모임 개설</h2>
+                  <form onSubmit={handleCreateMoim}>
+                    <div className="form-group">
+                      <label className="form-label">모임 이름</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="예: 금요 저녁 중보기도 모임"
+                        value={newMoimForm.title}
+                        onChange={(e) => setNewMoimForm({...newMoimForm, title: e.target.value})}
+                        required 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">카테고리</label>
+                      <select 
+                        className="form-input"
+                        value={newMoimForm.category}
+                        onChange={(e) => setNewMoimForm({...newMoimForm, category: e.target.value})}
+                      >
+                        <option value="기도모임">기도모임</option>
+                        <option value="운동모임">운동모임</option>
+                        <option value="취미모임">취미모임</option>
+                        <option value="성경공부모임">성경공부모임</option>
+                        <option value="기타">기타</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">간단한 모임 소개 (한 줄)</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="예: 매주 금요일 밤 함께 기도하는 소모임입니다."
+                        value={newMoimForm.shortDesc}
+                        onChange={(e) => setNewMoimForm({...newMoimForm, shortDesc: e.target.value})}
+                        required 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">상세 모임 소개</label>
+                      <textarea 
+                        className="form-input" 
+                        rows="5"
+                        placeholder="모임 목적, 시간, 장소, 대상 등 자세한 안내를 적어주세요."
+                        value={newMoimForm.longDesc}
+                        onChange={(e) => setNewMoimForm({...newMoimForm, longDesc: e.target.value})}
+                        required 
+                        style={{ resize: 'vertical' }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">모임 사진 첨부 (최대 5장)</label>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                        <label style={{ 
+                          width: '70px', 
+                          height: '70px', 
+                          border: '2px dashed var(--border-color)', 
+                          borderRadius: 'var(--border-radius-sm)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: 'var(--text-tertiary)'
+                        }}>
+                          <CameraIcon style={{ width: '20px', height: '20px' }} />
+                          <span style={{ fontSize: '10px', marginTop: '2px' }}>{newMoimForm.images.length}/5</span>
+                          <input type="file" accept="image/*" multiple onChange={handleMoimImageUpload} style={{ display: 'none' }} />
+                        </label>
+
+                        {newMoimForm.images.map((img, idx) => (
+                          <div key={idx} style={{ position: 'relative', width: '70px', height: '70px' }}>
+                            <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--border-radius-sm)' }} />
+                            <button 
+                              type="button"
+                              onClick={() => setNewMoimForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
+                              style={{
+                                position: 'absolute',
+                                top: '-6px',
+                                right: '-6px',
+                                background: 'var(--danger)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn btn-primary" style={{ marginTop: '12px' }}>
+                      소모임 등록 완료
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* VIEW J: GATHERING DETAIL */}
+            {currentView === 'moim-detail' && activeMoimId && (() => {
+              const moim = db.getGathering(activeMoimId);
+              if (!moim) return <p>모임을 찾을 수 없습니다.</p>;
+
+              const members = db.getGatheringMembers(moim.id);
+              const approvedMembers = members.filter(m => m.status === 'approved');
+              const pendingMembers = members.filter(m => m.status === 'pending');
+              const myMemberInfo = members.find(m => m.userEmail === currentUser.email);
+              const isLeader = moim.leaderId === currentUser.email;
+              const isApprovedMember = myMemberInfo && myMemberInfo.status === 'approved';
+              const isPendingMember = myMemberInfo && myMemberInfo.status === 'pending';
+
+              const notices = db.getGatheringNotices(moim.id);
+              const events = db.getGatheringEvents(moim.id);
+              const reviews = db.getGatheringReviews(moim.id);
+              const messages = db.getGatheringMessages(moim.id);
+
+              return (
+                <div className="animate-slide-up">
+                  {/* Moim Header Card */}
+                  <div style={{ backgroundColor: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--border-color)', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+                      <img 
+                        src={moim.images && moim.images.length > 0 ? moim.images[0] : '/mock_item_books.png'} 
+                        alt="" 
+                        style={{ width: '70px', height: '70px', borderRadius: 'var(--border-radius-sm)', objectFit: 'cover' }} 
+                      />
+                      <div>
+                        <span className="moim-card-category">{moim.category}</span>
+                        <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '4px 0' }}>{moim.title}</h2>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                          리더: {moim.leaderName} ({moim.leaderParish})
+                          {db.getUser(moim.leaderId)?.isVerified && <span className="verified-badge">교인인증</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Header Button */}
+                    {isLeader ? (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                          className="btn btn-secondary"
+                          onClick={() => setShowApprovalModal(true)}
+                          style={{ position: 'relative' }}
+                        >
+                          📋 승인 관리 {pendingMembers.length > 0 && <span style={{ background: 'var(--danger)', color: 'white', borderRadius: '10px', padding: '1px 6px', fontSize: '11px', marginLeft: '4px' }}>{pendingMembers.length}</span>}
+                        </button>
+                      </div>
+                    ) : isApprovedMember ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--primary-light)', padding: '8px 12px', borderRadius: 'var(--border-radius-sm)' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--primary)' }}>✓ 모임 참여 중 ({approvedMembers.length}명)</span>
+                        <button 
+                          className="btn-secondary"
+                          onClick={() => handleLeaveMoim(moim.id)}
+                          style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', color: 'var(--danger)', border: '1px solid var(--danger-light)' }}
+                        >
+                          모임 탈퇴
+                        </button>
+                      </div>
+                    ) : isPendingMember ? (
+                      <button className="btn btn-secondary" disabled>
+                        ⏳ 가입 승인 대기 중...
+                      </button>
+                    ) : (
+                      <button className="btn btn-primary" onClick={() => handleApplyMoim(moim.id)}>
+                        ✋ 모임 참여 신청하기
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Subtab Navigation */}
+                  <div className="subtab-bar">
+                    <button className={`subtab-btn ${moimSubTab === 'info' ? 'active' : ''}`} onClick={() => setMoimSubTab('info')}>ℹ️ 정보</button>
+                    <button className={`subtab-btn ${moimSubTab === 'notice' ? 'active' : ''}`} onClick={() => setMoimSubTab('notice')}>📢 공지</button>
+                    <button className={`subtab-btn ${moimSubTab === 'calendar' ? 'active' : ''}`} onClick={() => setMoimSubTab('calendar')}>📅 캘린더</button>
+                    <button className={`subtab-btn ${moimSubTab === 'chat' ? 'active' : ''}`} onClick={() => setMoimSubTab('chat')}>💬 채팅</button>
+                    <button className={`subtab-btn ${moimSubTab === 'review' ? 'active' : ''}`} onClick={() => setMoimSubTab('review')}>✍️ 후기</button>
+                  </div>
+
+                  {/* SUBTAB 1: INFO */}
+                  {moimSubTab === 'info' && (
+                    <div className="animate-fade-in" style={{ backgroundColor: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--border-color)' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '8px' }}>모임 소개</h3>
+                      <p style={{ fontSize: '14px', lineHeight: '1.6', whiteSpace: 'pre-line', marginBottom: '20px' }}>{moim.longDesc}</p>
+
+                      {moim.images && moim.images.length > 0 && (
+                        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '20px' }}>
+                          {moim.images.map((img, i) => (
+                            <img key={i} src={img} alt="" style={{ width: '120px', height: '120px', borderRadius: '8px', objectFit: 'cover' }} />
+                          ))}
+                        </div>
+                      )}
+
+                      <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '12px' }}>참여 멤버 ({approvedMembers.length}명)</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {approvedMembers.map(m => (
+                          <div key={m.userEmail} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className="avatar-circle" style={{ width: '32px', height: '32px', fontSize: '13px' }}>{m.userName.substring(0, 1)}</div>
+                              <div>
+                                <span style={{ fontSize: '13px', fontWeight: '600' }}>{m.userName}</span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '4px' }}>({m.userParish})</span>
+                                {db.getUser(m.userEmail)?.isVerified && <span className="verified-badge">교인인증</span>}
+                              </div>
+                            </div>
+                            {m.userEmail === moim.leaderId && <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--primary)', backgroundColor: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>모임장</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUBTAB 2: NOTICES */}
+                  {moimSubTab === 'notice' && (
+                    <div className="animate-fade-in">
+                      {isLeader && (
+                        <form onSubmit={(e) => handleAddNotice(moim.id, e)} style={{ backgroundColor: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--border-color)', marginBottom: '16px' }}>
+                          <label className="form-label">새 공지사항 등록 (모임장)</label>
+                          <textarea 
+                            className="form-input" 
+                            rows="3" 
+                            placeholder="모임원들에게 전달할 주요 공지 내용을 작성하세요."
+                            value={newNoticeContent}
+                            onChange={(e) => setNewNoticeContent(e.target.value)}
+                            required
+                          />
+                          <button type="submit" className="btn btn-primary" style={{ marginTop: '8px', padding: '8px 16px' }}>공지 작성 완료</button>
+                        </form>
+                      )}
+
+                      {notices.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>등록된 공지사항이 없습니다.</div>
+                      ) : (
+                        notices.map(n => (
+                          <div key={n.id} className="notice-card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--primary)' }}>📢 {n.authorName} 모임장</span>
+                              <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{n.createdAt.split('T')[0]}</span>
+                            </div>
+                            <p style={{ fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-line' }}>{n.content}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* SUBTAB 3: CALENDAR & EVENTS */}
+                  {moimSubTab === 'calendar' && (
+                    <div className="animate-fade-in">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: '700' }}>📅 모임 일정 캘린더</h3>
+                        {isApprovedMember && (
+                          <button className="btn btn-primary" style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }} onClick={() => setShowAddEventModal(true)}>
+                            + 일정 추가
+                          </button>
+                        )}
+                      </div>
+
+                      {events.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>예정된 일정이 없습니다.</div>
+                      ) : (
+                        events.map(ev => (
+                          <div key={ev.id} className="event-card">
+                            <div className="event-date-badge">
+                              <div style={{ fontSize: '12px' }}>{ev.date.substring(5, 7)}월</div>
+                              <div style={{ fontSize: '18px' }}>{ev.date.substring(8, 10)}일</div>
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>{ev.title}</h4>
+                              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <span>⏰ {ev.time}</span>
+                                <span>📍 {ev.location}</span>
+                              </div>
+                              {ev.description && <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>{ev.description}</p>}
+                            </div>
+                          </div>
+                        ))
+                      )}
+
+                      {/* Modal to add event */}
+                      {showAddEventModal && (
+                        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '400px' }}>
+                            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '12px' }}>새 일정 등록</h3>
+                            <form onSubmit={(e) => handleAddEvent(moim.id, e)}>
+                              <div className="form-group">
+                                <label className="form-label">일정 제목</label>
+                                <input type="text" className="form-input" required value={newEventForm.title} onChange={e => setNewEventForm({...newEventForm, title: e.target.value})} placeholder="예: 9월 정기 기도회" />
+                              </div>
+                              <div className="form-group" style={{ display: 'flex', gap: '8px' }}>
+                                <div style={{ flex: 1 }}>
+                                  <label className="form-label">날짜</label>
+                                  <input type="date" className="form-input" required value={newEventForm.date} onChange={e => setNewEventForm({...newEventForm, date: e.target.value})} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <label className="form-label">시간</label>
+                                  <input type="time" className="form-input" required value={newEventForm.time} onChange={e => setNewEventForm({...newEventForm, time: e.target.value})} />
+                                </div>
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">장소</label>
+                                <input type="text" className="form-input" value={newEventForm.location} onChange={e => setNewEventForm({...newEventForm, location: e.target.value})} placeholder="예: 교회 소예배실 2관" />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">상세 메모</label>
+                                <input type="text" className="form-input" value={newEventForm.description} onChange={e => setNewEventForm({...newEventForm, description: e.target.value})} placeholder="준비물 등 메모" />
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowAddEventModal(false)}>취소</button>
+                                <button type="submit" className="btn btn-primary">등록</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SUBTAB 4: GROUP CHATROOM */}
+                  {moimSubTab === 'chat' && (
+                    <div className="animate-fade-in">
+                      {!isApprovedMember ? (
+                        <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔒</div>
+                          <p style={{ fontWeight: '600' }}>모임원 전용 채팅방입니다</p>
+                          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>모임 참여 신청 후 모임장의 승인이 완료되면 대화에 참여하실 수 있습니다.</p>
+                        </div>
+                      ) : (
+                        <div className="chat-room-container" style={{ height: '420px', display: 'flex', flexDirection: 'column' }}>
+                          <div className="chat-messages-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+                            {messages.length === 0 ? (
+                              <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '20px' }}>모임 대화방이 개설되었습니다. 인사를 나누보세요!</div>
+                            ) : (
+                              messages.map(msg => {
+                                const isMine = msg.senderId === currentUser.email;
+                                return (
+                                  <div key={msg.id} className={`message-bubble-wrapper ${isMine ? 'me' : 'other'}`}>
+                                    {!isMine && <span className="message-sender-name">{msg.senderName}</span>}
+                                    <div className="message-bubble-row">
+                                      <div className="message-bubble">{msg.content}</div>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                            <div ref={moimChatEndRef} />
+                          </div>
+                          <form onSubmit={(e) => handleSendMoimChat(moim.id, e)} className="chat-input-bar">
+                            <input 
+                              type="text" 
+                              className="chat-input-field" 
+                              placeholder="모임원들에게 메시지 보내기..."
+                              value={moimChatInput}
+                              onChange={(e) => setMoimChatInput(e.target.value)}
+                            />
+                            <button type="submit" className="btn btn-primary" style={{ width: 'auto', padding: '0 16px' }}>전송</button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SUBTAB 5: REVIEWS */}
+                  {moimSubTab === 'review' && (
+                    <div className="animate-fade-in">
+                      {isApprovedMember && (
+                        <form onSubmit={(e) => handleAddReview(moim.id, e)} style={{ backgroundColor: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--border-color)', marginBottom: '16px' }}>
+                          <label className="form-label">모임 후기 작성</label>
+                          <textarea 
+                            className="form-input" 
+                            rows="3" 
+                            placeholder="모임 참여 소감과 은혜로운 이야기를 남겨주세요."
+                            value={newReviewForm.content}
+                            onChange={(e) => setNewReviewForm({...newReviewForm, content: e.target.value})}
+                            required
+                          />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--primary)', cursor: 'pointer' }}>
+                              <CameraIcon style={{ width: '16px', height: '16px' }} /> 사진 첨부
+                              <input type="file" accept="image/*" multiple onChange={handleReviewImageUpload} style={{ display: 'none' }} />
+                            </label>
+                            {newReviewForm.images.length > 0 && <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{newReviewForm.images.length}장 첨부됨</span>}
+                            <button type="submit" className="btn btn-primary" style={{ width: 'auto', marginLeft: 'auto', padding: '6px 14px', fontSize: '12px' }}>후기 등록</button>
+                          </div>
+                        </form>
+                      )}
+
+                      {reviews.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>등록된 후기가 없습니다. 첫 후기를 작성해보세요!</div>
+                      ) : (
+                        reviews.map(r => (
+                          <div key={r.id} className="review-card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700' }}>{r.authorName}</span>
+                              <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{r.createdAt.split('T')[0]}</span>
+                            </div>
+                            <p style={{ fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-line', marginBottom: '8px' }}>{r.content}</p>
+                            {r.images && r.images.length > 0 && (
+                              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
+                                {r.images.map((img, idx) => (
+                                  <img key={idx} src={img} alt="" style={{ width: '80px', height: '80px', borderRadius: '6px', objectFit: 'cover' }} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* APPROVAL MODAL FOR LEADER */}
+                  {showApprovalModal && (
+                    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                      <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                          <h3 style={{ fontSize: '16px', fontWeight: '700' }}>모임 가입 신청 관리 ({pendingMembers.length}건)</h3>
+                          <button className="btn-icon" onClick={() => setShowApprovalModal(false)}><XIcon style={{ width: '20px', height: '20px' }} /></button>
+                        </div>
+
+                        {pendingMembers.length === 0 ? (
+                          <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '20px' }}>대기 중인 가입 신청이 없습니다.</p>
+                        ) : (
+                          pendingMembers.map(pm => (
+                            <div key={pm.userEmail} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderBottom: '1px solid var(--border-color)' }}>
+                              <div>
+                                <span style={{ fontSize: '14px', fontWeight: '700' }}>{pm.userName}</span>
+                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '4px' }}>({pm.userParish})</span>
+                                {db.getUser(pm.userEmail)?.isVerified && <span className="verified-badge">교인인증</span>}
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button className="btn btn-primary" style={{ width: 'auto', padding: '4px 10px', fontSize: '12px' }} onClick={() => handleApproveMember(moim.id, pm.userEmail)}>승인</button>
+                                <button className="btn btn-secondary" style={{ width: 'auto', padding: '4px 10px', fontSize: '12px', color: 'var(--danger)' }} onClick={() => handleRejectMember(moim.id, pm.userEmail)}>거절</button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </main>
 
           {/* BOTTOM TAB BAR (Hidden in sub-views like register, details, and active chatroom for native immersion) */}
-          {!['register-item', 'item-detail', 'chat-room', 'user-profile'].includes(currentView) && (
+          {!['register-item', 'item-detail', 'chat-room', 'user-profile', 'create-moim', 'moim-detail'].includes(currentView) && (
             <nav className="bottom-tabbar animate-fade-in">
               <button 
                 className={`tab-item ${currentView === 'home' ? 'active' : ''}`}

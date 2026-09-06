@@ -442,3 +442,192 @@ p { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
   vertical-align: middle;
 }
 
+/* Service Switcher Bar (나눔 ↔ 모임) */
+.service-switcher-bar {
+  display: flex;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 4px;
+  margin-bottom: 16px;
+  gap: 4px;
+}
+
+.service-switcher-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.service-switcher-btn.active {
+  background-color: var(--bg-primary);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Gathering List & Cards */
+.moim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.moim-card {
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-md);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(229, 224, 213, 0.5);
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.moim-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.moim-card-img {
+  width: 90px;
+  height: 90px;
+  border-radius: var(--border-radius-sm);
+  object-fit: cover;
+  background-color: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.moim-card-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.moim-card-category {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--primary-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-bottom: 4px;
+}
+
+.moim-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.moim-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.moim-card-meta {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Gathering Subtabs (Information, Notice, Calendar, Chat, Review) */
+.subtab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  margin: -20px -20px 16px -20px;
+  padding: 0 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subtab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.subtab-btn {
+  flex: 1;
+  min-width: 65px;
+  padding: 12px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  transition: var(--transition-fast);
+}
+
+.subtab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Gathering Notice & Event Cards */
+.notice-card {
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary);
+}
+
+.event-card {
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.event-date-badge {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border-radius: var(--border-radius-sm);
+  padding: 8px 12px;
+  text-align: center;
+  font-weight: 700;
+  min-width: 65px;
+}
+
+.review-card {
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+}
+
+

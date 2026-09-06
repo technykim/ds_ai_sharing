@@ -5,7 +5,13 @@ const KEYS = {
   ITEMS: 'market_items',
   FAVORITES: 'market_favorites',
   CHATS: 'market_chats',
-  CURRENT_USER: 'market_current_user'
+  CURRENT_USER: 'market_current_user',
+  GATHERINGS: 'market_gatherings',
+  GATHERING_MEMBERS: 'market_gathering_members',
+  GATHERING_NOTICES: 'market_gathering_notices',
+  GATHERING_EVENTS: 'market_gathering_events',
+  GATHERING_REVIEWS: 'market_gathering_reviews',
+  GATHERING_CHATS: 'market_gathering_chats'
 };
 
 const INITIAL_USERS = [
@@ -169,19 +175,97 @@ const INITIAL_CHATS = [
   }
 ];
 
+const INITIAL_GATHERINGS = [
+  {
+    id: 'moim-1',
+    title: '금요 저녁 중보기도 모임',
+    category: '기도모임',
+    shortDesc: '매주 금요예배 후 함께 모여 교구와 개인 기도제목을 나누는 기도모임입니다.',
+    longDesc: '주님의 은혜 안에 함께 기도하며 서로의 짐을 나누는 중보기도 모임입니다.\n\n- 모임 시간: 매주 금요일 저녁 8:30\n- 모임 장소: 교회 소예배실 2관\n- 대상: 기도에 관심 있는 모든 교구원',
+    images: ['/mock_item_bible.png'],
+    leaderId: 'user1@example.com',
+    leaderName: '김사랑',
+    leaderParish: '1교구',
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: 'moim-2',
+    title: '주말 풋살 운동모임',
+    category: '운동모임',
+    shortDesc: '토요일 아침 건강하게 땀 흘리며 친교를 나누는 풋살 소모임입니다.',
+    longDesc: '남녀노소 누구나 즐겁게 풋살을 하며 체력을 다지고 친교하는 스포츠 모임입니다.\n\n- 모임 시간: 매월 둘째/넷째 토요일 오전 7:00\n- 장소: 근처 풋살구장\n- 초보자도 환영합니다!',
+    images: ['/mock_item_blocks.png'],
+    leaderId: 'user2@example.com',
+    leaderName: '박소망',
+    leaderParish: '2교구',
+    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: 'moim-3',
+    title: '신약 성경 통독 및 묵상 모임',
+    category: '성경공부모임',
+    shortDesc: '하루 3장씩 성경을 읽고 묵상 나눔을 함께하는 모임입니다.',
+    longDesc: '말씀 안에서 매일 삶의 은혜를 발견하고 서로의 묵상을 나누는 성경통독 모임입니다.\n\n- 주중 매일 카톡 묵상 나눔\n- 주일 2부 예배 후 30분 모임',
+    images: ['/mock_item_books.png'],
+    leaderId: 'user3@example.com',
+    leaderName: '이믿음',
+    leaderParish: '3교구',
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+  }
+];
+
+const INITIAL_GATHERING_MEMBERS = [
+  { gatheringId: 'moim-1', userEmail: 'user1@example.com', userName: '김사랑', userParish: '1교구', status: 'approved', joinedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+  { gatheringId: 'moim-1', userEmail: 'user2@example.com', userName: '박소망', userParish: '2교구', status: 'approved', joinedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+  { gatheringId: 'moim-1', userEmail: 'user3@example.com', userName: '이믿음', userParish: '3교구', status: 'pending', joinedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+
+  { gatheringId: 'moim-2', userEmail: 'user2@example.com', userName: '박소망', userParish: '2교구', status: 'approved', joinedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+  { gatheringId: 'moim-2', userEmail: 'user1@example.com', userName: '김사랑', userParish: '1교구', status: 'approved', joinedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+
+  { gatheringId: 'moim-3', userEmail: 'user3@example.com', userName: '이믿음', userParish: '3교구', status: 'approved', joinedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+  { gatheringId: 'moim-3', userEmail: 'user2@example.com', userName: '박소망', userParish: '2교구', status: 'approved', joinedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() }
+];
+
+const INITIAL_GATHERING_NOTICES = [
+  { id: 'gn-1', gatheringId: 'moim-1', authorId: 'user1@example.com', authorName: '김사랑', content: '이번 주 금요기도회는 8시 30분에 소예배실 2관에서 모입니다. 기도제목을 미리 묵상해 오세요.', createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'gn-2', gatheringId: 'moim-2', authorId: 'user2@example.com', authorName: '박소망', content: '이번 주 토요일 풋살 모임 장소 및 풋살화 지참 안내드립니다.', createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() }
+];
+
+const INITIAL_GATHERING_EVENTS = [
+  { id: 'ge-1', gatheringId: 'moim-1', title: '9월 정기 금요기도회', date: '2026-09-11', time: '20:30', location: '소예배실 2관', description: '교구 중보기도 및 합심기도' },
+  { id: 'ge-2', gatheringId: 'moim-2', title: '9월 풋살 정기전', date: '2026-09-12', time: '07:00', location: '근처 풋살구장', description: '친목 풋살 경기' },
+  { id: 'ge-3', gatheringId: 'moim-3', title: '마가복음 통독 모임', date: '2026-09-13', time: '11:30', location: '비전홀 3층', description: '마가복음 1-5장 묵상 나눔' }
+];
+
+const INITIAL_GATHERING_REVIEWS = [
+  { id: 'gr-1', gatheringId: 'moim-1', authorId: 'user2@example.com', authorName: '박소망', content: '함께 뜨겁게 기도할 수 있어서 정말 은혜롭고 감사한 시간이었습니다!', rating: 5, images: [], createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'gr-2', gatheringId: 'moim-2', authorId: 'user1@example.com', authorName: '김사랑', content: '오랜만에 상쾌하게 땀 흘리며 교제하니 기분도 밝아지네요. 다들 수고하셨습니다!', rating: 5, images: ['/mock_item_blocks.png'], createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() }
+];
+
+const INITIAL_GATHERING_CHATS = [
+  { id: 'gc-1', gatheringId: 'moim-1', senderId: 'user1@example.com', senderName: '김사랑', content: '안녕하세요 기도모임 이웃 여러분! 이번 주 금요일에 뵙겠습니다.', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'gc-2', gatheringId: 'moim-1', senderId: 'user2@example.com', senderName: '박소망', content: '네 리더님! 기도로 준비하겠습니다.', timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() }
+];
+
 const DB_VERSION_KEY = 'market_db_version';
-const CURRENT_DB_VERSION = 'v5_danggeun_church';
+const CURRENT_DB_VERSION = 'v6_gatherings_feature';
 
 // Helper to initialize DB
 export const initDB = () => {
   const storedVersion = localStorage.getItem(DB_VERSION_KEY);
   if (storedVersion !== CURRENT_DB_VERSION) {
-    // Force reset local storage keys to apply new database schema (nicknames, numeric parishes, tradeLocation)
+    // Force reset local storage keys to apply new database schema
     localStorage.removeItem(KEYS.USERS);
     localStorage.removeItem(KEYS.ITEMS);
     localStorage.removeItem(KEYS.FAVORITES);
     localStorage.removeItem(KEYS.CHATS);
     localStorage.removeItem(KEYS.CURRENT_USER);
+    localStorage.removeItem(KEYS.GATHERINGS);
+    localStorage.removeItem(KEYS.GATHERING_MEMBERS);
+    localStorage.removeItem(KEYS.GATHERING_NOTICES);
+    localStorage.removeItem(KEYS.GATHERING_EVENTS);
+    localStorage.removeItem(KEYS.GATHERING_REVIEWS);
+    localStorage.removeItem(KEYS.GATHERING_CHATS);
     localStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION);
   }
 
@@ -196,6 +280,24 @@ export const initDB = () => {
   }
   if (!localStorage.getItem(KEYS.CHATS)) {
     localStorage.setItem(KEYS.CHATS, JSON.stringify(INITIAL_CHATS));
+  }
+  if (!localStorage.getItem(KEYS.GATHERINGS)) {
+    localStorage.setItem(KEYS.GATHERINGS, JSON.stringify(INITIAL_GATHERINGS));
+  }
+  if (!localStorage.getItem(KEYS.GATHERING_MEMBERS)) {
+    localStorage.setItem(KEYS.GATHERING_MEMBERS, JSON.stringify(INITIAL_GATHERING_MEMBERS));
+  }
+  if (!localStorage.getItem(KEYS.GATHERING_NOTICES)) {
+    localStorage.setItem(KEYS.GATHERING_NOTICES, JSON.stringify(INITIAL_GATHERING_NOTICES));
+  }
+  if (!localStorage.getItem(KEYS.GATHERING_EVENTS)) {
+    localStorage.setItem(KEYS.GATHERING_EVENTS, JSON.stringify(INITIAL_GATHERING_EVENTS));
+  }
+  if (!localStorage.getItem(KEYS.GATHERING_REVIEWS)) {
+    localStorage.setItem(KEYS.GATHERING_REVIEWS, JSON.stringify(INITIAL_GATHERING_REVIEWS));
+  }
+  if (!localStorage.getItem(KEYS.GATHERING_CHATS)) {
+    localStorage.setItem(KEYS.GATHERING_CHATS, JSON.stringify(INITIAL_GATHERING_CHATS));
   }
   // Auto-login user1 by default to make testing painless
   if (!localStorage.getItem(KEYS.CURRENT_USER)) {
@@ -432,3 +534,182 @@ export const sendMessage = (itemId, buyerId, sellerId, senderId, content) => {
   localStorage.setItem(KEYS.CHATS, JSON.stringify(chats));
   return newMsg;
 };
+
+// ================= GATHERING API FUNCTIONS =================
+
+export const getGatherings = () => {
+  const data = localStorage.getItem(KEYS.GATHERINGS);
+  return data ? JSON.parse(data) : [];
+};
+
+export const getGathering = (id) => {
+  const list = getGatherings();
+  return list.find(g => g.id === id);
+};
+
+export const createGathering = (gatheringData) => {
+  const gatherings = getGatherings();
+  const newMoim = {
+    id: `moim-${Date.now()}`,
+    ...gatheringData,
+    createdAt: new Date().toISOString()
+  };
+  gatherings.unshift(newMoim);
+  localStorage.setItem(KEYS.GATHERINGS, JSON.stringify(gatherings));
+
+  // Automatically add leader as approved member
+  const members = getGatheringMembersAll();
+  members.push({
+    gatheringId: newMoim.id,
+    userEmail: newMoim.leaderId,
+    userName: newMoim.leaderName,
+    userParish: newMoim.leaderParish,
+    status: 'approved',
+    joinedAt: new Date().toISOString()
+  });
+  localStorage.setItem(KEYS.GATHERING_MEMBERS, JSON.stringify(members));
+
+  return newMoim;
+};
+
+export const getGatheringMembersAll = () => {
+  const data = localStorage.getItem(KEYS.GATHERING_MEMBERS);
+  return data ? JSON.parse(data) : [];
+};
+
+export const getGatheringMembers = (gatheringId) => {
+  const all = getGatheringMembersAll();
+  return all.filter(m => m.gatheringId === gatheringId);
+};
+
+export const applyGatheringMember = (gatheringId, user) => {
+  const members = getGatheringMembersAll();
+  const existing = members.find(m => m.gatheringId === gatheringId && m.userEmail === user.email);
+  if (existing) return existing;
+
+  const newMember = {
+    gatheringId,
+    userEmail: user.email,
+    userName: user.name,
+    userParish: user.parish,
+    status: 'pending',
+    joinedAt: new Date().toISOString()
+  };
+  members.push(newMember);
+  localStorage.setItem(KEYS.GATHERING_MEMBERS, JSON.stringify(members));
+  return newMember;
+};
+
+export const approveGatheringMember = (gatheringId, userEmail) => {
+  const members = getGatheringMembersAll();
+  const target = members.find(m => m.gatheringId === gatheringId && m.userEmail === userEmail);
+  if (target) {
+    target.status = 'approved';
+    localStorage.setItem(KEYS.GATHERING_MEMBERS, JSON.stringify(members));
+  }
+  return target;
+};
+
+export const rejectGatheringMember = (gatheringId, userEmail) => {
+  let members = getGatheringMembersAll();
+  members = members.filter(m => !(m.gatheringId === gatheringId && m.userEmail === userEmail));
+  localStorage.setItem(KEYS.GATHERING_MEMBERS, JSON.stringify(members));
+};
+
+export const leaveGathering = (gatheringId, userEmail) => {
+  let members = getGatheringMembersAll();
+  members = members.filter(m => !(m.gatheringId === gatheringId && m.userEmail === userEmail));
+  localStorage.setItem(KEYS.GATHERING_MEMBERS, JSON.stringify(members));
+};
+
+export const getGatheringNotices = (gatheringId) => {
+  const data = localStorage.getItem(KEYS.GATHERING_NOTICES);
+  const list = data ? JSON.parse(data) : [];
+  return list.filter(n => n.gatheringId === gatheringId);
+};
+
+export const addGatheringNotice = (gatheringId, authorId, authorName, content) => {
+  const data = localStorage.getItem(KEYS.GATHERING_NOTICES);
+  const list = data ? JSON.parse(data) : [];
+  const newNotice = {
+    id: `gn-${Date.now()}`,
+    gatheringId,
+    authorId,
+    authorName,
+    content,
+    createdAt: new Date().toISOString()
+  };
+  list.unshift(newNotice);
+  localStorage.setItem(KEYS.GATHERING_NOTICES, JSON.stringify(list));
+  return newNotice;
+};
+
+export const getGatheringEvents = (gatheringId) => {
+  const data = localStorage.getItem(KEYS.GATHERING_EVENTS);
+  const list = data ? JSON.parse(data) : [];
+  return list.filter(e => e.gatheringId === gatheringId);
+};
+
+export const addGatheringEvent = (gatheringId, title, date, time, location, description) => {
+  const data = localStorage.getItem(KEYS.GATHERING_EVENTS);
+  const list = data ? JSON.parse(data) : [];
+  const newEvent = {
+    id: `ge-${Date.now()}`,
+    gatheringId,
+    title,
+    date,
+    time,
+    location,
+    description
+  };
+  list.push(newEvent);
+  localStorage.setItem(KEYS.GATHERING_EVENTS, JSON.stringify(list));
+  return newEvent;
+};
+
+export const getGatheringReviews = (gatheringId) => {
+  const data = localStorage.getItem(KEYS.GATHERING_REVIEWS);
+  const list = data ? JSON.parse(data) : [];
+  return list.filter(r => r.gatheringId === gatheringId);
+};
+
+export const addGatheringReview = (gatheringId, authorId, authorName, content, images = [], rating = 5) => {
+  const data = localStorage.getItem(KEYS.GATHERING_REVIEWS);
+  const list = data ? JSON.parse(data) : [];
+  const newReview = {
+    id: `gr-${Date.now()}`,
+    gatheringId,
+    authorId,
+    authorName,
+    content,
+    images,
+    rating,
+    createdAt: new Date().toISOString()
+  };
+  list.unshift(newReview);
+  localStorage.setItem(KEYS.GATHERING_REVIEWS, JSON.stringify(list));
+  return newReview;
+};
+
+export const getGatheringMessages = (gatheringId) => {
+  const data = localStorage.getItem(KEYS.GATHERING_CHATS);
+  const list = data ? JSON.parse(data) : [];
+  return list.filter(c => c.gatheringId === gatheringId);
+};
+
+export const sendGatheringMessage = (gatheringId, senderId, senderName, content) => {
+  const data = localStorage.getItem(KEYS.GATHERING_CHATS);
+  const list = data ? JSON.parse(data) : [];
+  const newMsg = {
+    id: `gc-${Date.now()}`,
+    gatheringId,
+    senderId,
+    senderName,
+    content,
+    timestamp: new Date().toISOString()
+  };
+  list.push(newMsg);
+  localStorage.setItem(KEYS.GATHERING_CHATS, JSON.stringify(list));
+  return newMsg;
+};
+
