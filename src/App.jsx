@@ -52,6 +52,7 @@ function App() {
   const [profileUserEmail, setProfileUserEmail] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', nickname: '', parish: '', address: '', contact: '' });
+  const [myPageTab, setMyPageTab] = useState('wishlist'); // 'wishlist' or 'myitems'
 
   // Registration states
   const [newItemForm, setNewItemForm] = useState({
@@ -137,8 +138,13 @@ function App() {
     }
   }, [activeRoomKey, chatRooms]);
 
-  // Navigation Logic
   const navigateTo = (view) => {
+    if (view === 'wishlist') {
+      setMyPageTab('wishlist');
+      setViewHistory(prev => [...prev, 'mypage']);
+      setCurrentView('mypage');
+      return;
+    }
     setViewHistory(prev => [...prev, view]);
     setCurrentView(view);
   };
@@ -1021,58 +1027,7 @@ function App() {
               </div>
             )}
 
-            {/* VIEW B: WISHLIST */}
-            {currentView === 'wishlist' && (
-              <div className="animate-slide-up">
-                {items.filter(item => db.isFavorite(currentUser.email, item.id)).length > 0 ? (
-                  <div className="items-grid">
-                    {items.filter(item => db.isFavorite(currentUser.email, item.id)).map(item => (
-                      <div 
-                        key={item.id} 
-                        className="item-card" 
-                        onClick={() => {
-                          setActiveItemId(item.id);
-                          setCarouselIndex(0);
-                          navigateTo('item-detail');
-                        }}
-                      >
-                        <div className="item-card-img-wrapper">
-                          <img 
-                            src={item.images[0] || '/mock_item_blocks.png'} 
-                            alt={item.title} 
-                            className="item-card-img" 
-                          />
-                          <div className="item-card-badge">{item.category}</div>
-                          <button 
-                            className="item-card-fav"
-                            onClick={(e) => handleToggleFav(item.id, e)}
-                          >
-                            <HeartIcon fill={true} style={{ width: '16px', height: '16px' }} />
-                          </button>
-                        </div>
-                        <div className="item-card-info">
-                          <h3 className="item-card-title">{item.title}</h3>
-                          <div className="item-card-parish">
-                            <MapPinIcon style={{ width: '11px', height: '11px' }} />
-                            {item.sellerParish} • {item.sellerName}
-                          </div>
-                          <div className="item-card-footer">
-                            <span className="item-card-status">무료 나눔</span>
-                            <span className="item-card-time">{getRelativeTime(item.createdAt)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-tertiary)' }}>
-                    <div style={{ fontSize: '32px', marginBottom: '12px' }}>❤️</div>
-                    <p style={{ fontWeight: '500', marginBottom: '4px' }}>찜바구니가 비어 있습니다</p>
-                    <p style={{ fontSize: '13px' }}>마음에 드는 이웃의 나눔 물건에 하트를 눌러보세요.</p>
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* VIEW C: CHATS ROOMS LIST */}
             {currentView === 'chats' && (
@@ -1235,42 +1190,114 @@ function App() {
                       </button>
                     </div>
 
-                    <div className="profile-section-title">
-                      <span>내 나눔 등록 물건</span>
+                    {/* Sub-tab selection inside My Page */}
+                    <div className="service-switcher-bar" style={{ marginTop: '16px', marginBottom: '16px' }}>
+                      <button 
+                        type="button"
+                        className={`service-switcher-btn ${myPageTab === 'wishlist' ? 'active' : ''}`}
+                        onClick={() => setMyPageTab('wishlist')}
+                      >
+                        ❤️ 찜바구니 ({items.filter(item => db.isFavorite(currentUser.email, item.id)).length})
+                      </button>
+                      <button 
+                        type="button"
+                        className={`service-switcher-btn ${myPageTab === 'myitems' ? 'active' : ''}`}
+                        onClick={() => setMyPageTab('myitems')}
+                      >
+                        🎁 내 등록 물건 ({items.filter(i => i.sellerId === currentUser.email).length})
+                      </button>
                     </div>
 
-                    {items.filter(i => i.sellerId === currentUser.email).length > 0 ? (
-                      <div className="items-grid">
-                        {items.filter(i => i.sellerId === currentUser.email).map(item => (
-                          <div 
-                            key={item.id} 
-                            className="item-card" 
-                            onClick={() => {
-                              setActiveItemId(item.id);
-                              setCarouselIndex(0);
-                              navigateTo('item-detail');
-                            }}
-                          >
-                            <div className="item-card-img-wrapper">
-                              <img 
-                                src={item.images[0] || '/mock_item_blocks.png'} 
-                                alt={item.title} 
-                                className="item-card-img" 
-                              />
-                            </div>
-                            <div className="item-card-info">
-                              <h3 className="item-card-title">{item.title}</h3>
-                              <div className="item-card-footer">
-                                <span className="item-card-status">무료 나눔</span>
-                                <span className="item-card-time">{getRelativeTime(item.createdAt)}</span>
+                    {/* Tab 1: Wishlist */}
+                    {myPageTab === 'wishlist' && (
+                      <div className="animate-fade-in">
+                        {items.filter(item => db.isFavorite(currentUser.email, item.id)).length > 0 ? (
+                          <div className="items-grid">
+                            {items.filter(item => db.isFavorite(currentUser.email, item.id)).map(item => (
+                              <div 
+                                key={item.id} 
+                                className="item-card" 
+                                onClick={() => {
+                                  setActiveItemId(item.id);
+                                  setCarouselIndex(0);
+                                  navigateTo('item-detail');
+                                }}
+                              >
+                                <div className="item-card-img-wrapper">
+                                  <img 
+                                    src={item.images[0] || '/mock_item_blocks.png'} 
+                                    alt={item.title} 
+                                    className="item-card-img" 
+                                  />
+                                  <div className="item-card-badge">{item.category}</div>
+                                  <button 
+                                    className="item-card-fav"
+                                    onClick={(e) => handleToggleFav(item.id, e)}
+                                  >
+                                    <HeartIcon fill={true} style={{ width: '16px', height: '16px' }} />
+                                  </button>
+                                </div>
+                                <div className="item-card-info">
+                                  <h3 className="item-card-title">{item.title}</h3>
+                                  <div className="item-card-parish">
+                                    <MapPinIcon style={{ width: '11px', height: '11px' }} />
+                                    {item.sellerParish} • {item.sellerName}
+                                  </div>
+                                  <div className="item-card-footer">
+                                    <span className="item-card-status">무료 나눔</span>
+                                    <span className="item-card-time">{getRelativeTime(item.createdAt)}</span>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
+                            ))}
                           </div>
-                        ))}
+                        ) : (
+                          <div className="profile-empty-state" style={{ textAlign: 'center', padding: '30px 10px' }}>
+                            <div style={{ fontSize: '28px', marginBottom: '8px' }}>❤️</div>
+                            <p style={{ fontWeight: '600', marginBottom: '4px' }}>찜바구니가 비어 있습니다</p>
+                            <p style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>마음에 드는 이웃의 나눔 물건에 하트를 눌러보세요.</p>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="profile-empty-state">
-                        아직 등록한 물건이 없습니다.
+                    )}
+
+                    {/* Tab 2: My Uploaded Items */}
+                    {myPageTab === 'myitems' && (
+                      <div className="animate-fade-in">
+                        {items.filter(i => i.sellerId === currentUser.email).length > 0 ? (
+                          <div className="items-grid">
+                            {items.filter(i => i.sellerId === currentUser.email).map(item => (
+                              <div 
+                                key={item.id} 
+                                className="item-card" 
+                                onClick={() => {
+                                  setActiveItemId(item.id);
+                                  setCarouselIndex(0);
+                                  navigateTo('item-detail');
+                                }}
+                              >
+                                <div className="item-card-img-wrapper">
+                                  <img 
+                                    src={item.images[0] || '/mock_item_blocks.png'} 
+                                    alt={item.title} 
+                                    className="item-card-img" 
+                                  />
+                                </div>
+                                <div className="item-card-info">
+                                  <h3 className="item-card-title">{item.title}</h3>
+                                  <div className="item-card-footer">
+                                    <span className="item-card-status">무료 나눔</span>
+                                    <span className="item-card-time">{getRelativeTime(item.createdAt)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="profile-empty-state">
+                            아직 등록한 물건이 없습니다.
+                          </div>
+                        )}
                       </div>
                     )}
                   </>
@@ -2138,18 +2165,31 @@ function App() {
                 }}
               >
                 <HomeIcon active={currentView === 'home'} />
-                <span>나눔 홈</span>
+                <span>홈</span>
               </button>
 
               <button 
-                className={`tab-item ${currentView === 'wishlist' ? 'active' : ''}`}
+                className={`tab-item ${currentView === 'home' && mainServiceTab === 'nanum' ? 'active' : ''}`}
                 onClick={() => {
-                  setViewHistory(['home']); // Ensure going back goes home
-                  navigateTo('wishlist');
+                  setMainServiceTab('nanum');
+                  setViewHistory(['home']);
+                  setCurrentView('home');
                 }}
               >
-                <HeartIcon active={currentView === 'wishlist'} />
-                <span>찜바구니</span>
+                <GiftIcon style={{ width: '22px', height: '22px', marginBottom: '4px' }} />
+                <span>물건나눔</span>
+              </button>
+
+              <button 
+                className={`tab-item ${currentView === 'home' && mainServiceTab === 'moim' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainServiceTab('moim');
+                  setViewHistory(['home']);
+                  setCurrentView('home');
+                }}
+              >
+                <UsersIcon style={{ width: '22px', height: '22px', marginBottom: '4px' }} />
+                <span>소모임</span>
               </button>
 
               <button 
