@@ -73,9 +73,13 @@ function App() {
     parish: '1교구',
     address: '',
     contact: '',
-    isVerified: false
+    isVerified: false,
+    recommenderType: '구역담당목회자',
+    recommenderDetail: ''
   });
   const [authError, setAuthError] = useState('');
+  const [showUserApprovalModal, setShowUserApprovalModal] = useState(false);
+  const [pendingUsersList, setPendingUsersList] = useState([]);
 
   // Service Switcher State
   const [mainServiceTab, setMainServiceTab] = useState('nanum'); // 'nanum' or 'moim'
@@ -170,10 +174,13 @@ function App() {
 
   const handleSignup = (e) => {
     e.preventDefault();
+    if (signupForm.recommenderType === '기존가입자' && !signupForm.recommenderDetail.trim()) {
+      setAuthError('추천인의 닉네임을 입력해 주세요.');
+      return;
+    }
     try {
-      const newUser = db.createUser(signupForm);
-      db.setCurrentUser(newUser);
-      setCurrentUser(newUser);
+      db.createUser(signupForm);
+      alert('회원가입 신청이 완료되었습니다!\n추천인(구역장/목회자)의 승인 완료 후 로그인하실 수 있습니다.');
       setSignupForm({
         email: '',
         password: '',
@@ -182,11 +189,12 @@ function App() {
         parish: '1교구',
         address: '',
         contact: '',
-        isVerified: false
+        isVerified: false,
+        recommenderType: '구역담당목회자',
+        recommenderDetail: ''
       });
-      setAuthError('');
-      setViewHistory(['home']);
-      setCurrentView('home');
+      setAuthError('가입 승인 대기 중입니다. 추천인(구역장/목회자)의 승인 후 로그인이 가능합니다.');
+      navigateTo('login');
     } catch (err) {
       setAuthError(err.message);
     }
@@ -494,13 +502,33 @@ function App() {
                   required 
                 />
               </div>
-              {authError && <p style={{ color: 'var(--danger)', fontSize: '12px', marginBottom: '16px' }}>{authError}</p>}
+              {authError && (
+                <div style={{ backgroundColor: 'var(--danger-light)', color: 'var(--danger)', border: '1px solid rgba(224, 93, 93, 0.3)', borderRadius: 'var(--border-radius-sm)', padding: '10px 12px', fontSize: '13px', marginBottom: '16px', lineHeight: '1.4' }}>
+                  ⚠️ {authError}
+                </div>
+              )}
               <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>로그인</button>
             </form>
           </div>
-          <div className="auth-footer">
-            계정이 없으신가요? 
-            <span className="auth-link" onClick={() => navigateTo('signup')}>회원가입하기</span>
+          <div className="auth-footer" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div>
+              계정이 없으신가요? 
+              <span className="auth-link" onClick={() => navigateTo('signup')}>회원가입하기</span>
+            </div>
+            
+            {/* Pastor / Leader Mock User Approval Button */}
+            <button 
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                const pending = db.getPendingUsers();
+                setPendingUsersList(pending);
+                setShowUserApprovalModal(true);
+              }}
+              style={{ fontSize: '12px', padding: '8px 12px', marginTop: '8px', border: '1px dashed var(--accent)', color: 'var(--accent-hover)' }}
+            >
+              🔔 목회자/구역장 회원 가입 승인 관리 {db.getPendingUsers().length > 0 && `(${db.getPendingUsers().length}건 대기)`}
+            </button>
           </div>
         </div>
       )}
@@ -610,8 +638,37 @@ function App() {
                   required 
                 />
               </div>
+
+              <div className="form-group">
+                <label className="form-label">추천인 선택</label>
+                <select 
+                  className="form-input"
+                  value={signupForm.recommenderType}
+                  onChange={(e) => setSignupForm({...signupForm, recommenderType: e.target.value})}
+                >
+                  <option value="구역담당목회자">구역담당목회자</option>
+                  <option value="구역장">구역장</option>
+                  <option value="남여선교회장">남여선교회장</option>
+                  <option value="기존가입자">기존가입자</option>
+                </select>
+              </div>
+
+              {signupForm.recommenderType === '기존가입자' && (
+                <div className="form-group animate-fade-in">
+                  <label className="form-label">추천인 닉네임 (별명)</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="추천해주신 기존가입자의 닉네임을 입력하세요"
+                    value={signupForm.recommenderDetail}
+                    onChange={(e) => setSignupForm({...signupForm, recommenderDetail: e.target.value})}
+                    required 
+                  />
+                </div>
+              )}
+
               {authError && <p style={{ color: 'var(--danger)', fontSize: '12px', marginBottom: '16px' }}>{authError}</p>}
-              <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>이웃 등록 완료</button>
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>이웃 등록 신청</button>
             </form>
           </div>
           <div className="auth-footer">
@@ -733,6 +790,14 @@ function App() {
                       </div>
                     </div>
 
+                    {/* Search Result Feedback Bar */}
+                    {searchQuery.trim() !== '' && (
+                      <div className="search-result-bar animate-fade-in">
+                        <span>🔍 "{searchQuery}" 검색 결과 ({filteredItems.length}건)</span>
+                        <button className="search-clear-btn" onClick={() => setSearchQuery('')} title="검색 초기화">✕</button>
+                      </div>
+                    )}
+
                     {/* Feed Type Selector */}
                     <div className="feed-type-tabs">
                       <button 
@@ -849,6 +914,23 @@ function App() {
                         />
                       </div>
                     </div>
+
+                    {/* Search Result Feedback Bar for Moim */}
+                    {searchQuery.trim() !== '' && (() => {
+                      const count = gatherings.filter(g => {
+                        const matchesCategory = moimCategory === '전체' || g.category === moimCategory;
+                        const matchesSearch = g.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          g.shortDesc.toLowerCase().includes(searchQuery.toLowerCase());
+                        return matchesCategory && matchesSearch;
+                      }).length;
+
+                      return (
+                        <div className="search-result-bar animate-fade-in">
+                          <span>🔍 "{searchQuery}" 소모임 검색 결과 ({count}건)</span>
+                          <button className="search-clear-btn" onClick={() => setSearchQuery('')} title="검색 초기화">✕</button>
+                        </div>
+                      );
+                    })()}
 
                     {/* Moim Categories Bar */}
                     <div className="categories-bar">
@@ -2096,6 +2178,71 @@ function App() {
             </nav>
           )}
         </>
+      )}
+
+      {/* 3. USER APPROVAL MANAGEMENT MODAL FOR LEADERS/ADMINS */}
+      {showUserApprovalModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '420px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--primary)' }}>🔔 신규 가입 승인 관리 ({pendingUsersList.length}건)</h3>
+              <button className="btn-icon" onClick={() => setShowUserApprovalModal(false)}><XIcon style={{ width: '20px', height: '20px' }} /></button>
+            </div>
+
+            {pendingUsersList.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-tertiary)' }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+                <p style={{ fontWeight: '600' }}>대기 중인 신규 회원 가입 신청이 없습니다.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {pendingUsersList.map(pUser => (
+                  <div key={pUser.email} style={{ backgroundColor: 'var(--bg-secondary)', padding: '12px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                      <div>
+                        <span style={{ fontSize: '15px', fontWeight: '700' }}>{pUser.name} ({pUser.nickname})</span>
+                        <span className="pending-badge" style={{ marginLeft: '6px' }}>승인대기</span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>{pUser.parish}</span>
+                    </div>
+
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: '1.4' }}>
+                      <div>📧 이메일: {pUser.email}</div>
+                      <div>📞 연락처: {pUser.contact}</div>
+                      <div>🤝 추천인: <strong>{pUser.recommenderType}</strong> {pUser.recommenderDetail && `(${pUser.recommenderDetail})`}</div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ padding: '6px 12px', fontSize: '12px', flex: 1 }}
+                        onClick={() => {
+                          db.approveUser(pUser.email);
+                          setPendingUsersList(db.getPendingUsers());
+                          alert(`${pUser.name} 님의 가입이 승인되었습니다.`);
+                        }}
+                      >
+                        정식 회원 승인
+                      </button>
+                      <button 
+                        className="btn btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: '12px', flex: 1, color: 'var(--danger)' }}
+                        onClick={() => {
+                          if (window.confirm(`${pUser.name} 님의 가입 신청을 거절하시겠습니까?`)) {
+                            db.rejectUser(pUser.email);
+                            setPendingUsersList(db.getPendingUsers());
+                          }
+                        }}
+                      >
+                        거절
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

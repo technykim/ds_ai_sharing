@@ -23,7 +23,10 @@ const INITIAL_USERS = [
     parish: '1교구',
     address: '서울시 강남구 역삼동 123-45',
     contact: '010-1234-5678',
-    isVerified: true
+    isVerified: true,
+    status: 'approved',
+    recommenderType: '구역담당목회자',
+    recommenderDetail: ''
   },
   {
     email: 'user2@example.com',
@@ -33,7 +36,10 @@ const INITIAL_USERS = [
     parish: '2교구',
     address: '서울시 마포구 합정동 98-7',
     contact: '010-8765-4321',
-    isVerified: true
+    isVerified: true,
+    status: 'approved',
+    recommenderType: '구역장',
+    recommenderDetail: ''
   },
   {
     email: 'user3@example.com',
@@ -43,7 +49,10 @@ const INITIAL_USERS = [
     parish: '3교구',
     address: '서울시 성동구 성수동 45-6',
     contact: '010-5678-1234',
-    isVerified: true
+    isVerified: true,
+    status: 'approved',
+    recommenderType: '기존가입자',
+    recommenderDetail: '사랑지기'
   }
 ];
 
@@ -248,7 +257,7 @@ const INITIAL_GATHERING_CHATS = [
 ];
 
 const DB_VERSION_KEY = 'market_db_version';
-const CURRENT_DB_VERSION = 'v6_gatherings_feature';
+const CURRENT_DB_VERSION = 'v7_recommender_approval';
 
 // Helper to initialize DB
 export const initDB = () => {
@@ -321,9 +330,13 @@ export const createUser = (user) => {
   if (users.some(u => u.email === user.email)) {
     throw new Error('이미 등록된 이메일 주소입니다.');
   }
-  users.push(user);
+  const newUser = {
+    ...user,
+    status: 'pending' // New registered users start as pending approval!
+  };
+  users.push(newUser);
   localStorage.setItem(KEYS.USERS, JSON.stringify(users));
-  return user;
+  return newUser;
 };
 
 export const updateUser = (email, updatedData) => {
@@ -360,8 +373,32 @@ export const login = (email, password) => {
   if (!user || user.password !== password) {
     throw new Error('이메일 혹은 비밀번호가 틀렸습니다.');
   }
+  if (user.status === 'pending') {
+    throw new Error('가입 승인 대기 중입니다. 추천인(구역장/목회자)의 승인 후 로그인이 가능합니다.');
+  }
   setCurrentUser(user);
   return user;
+};
+
+export const getPendingUsers = () => {
+  const users = getUsers();
+  return users.filter(u => u.status === 'pending');
+};
+
+export const approveUser = (email) => {
+  const users = getUsers();
+  const target = users.find(u => u.email === email);
+  if (target) {
+    target.status = 'approved';
+    localStorage.setItem(KEYS.USERS, JSON.stringify(users));
+  }
+  return target;
+};
+
+export const rejectUser = (email) => {
+  let users = getUsers();
+  users = users.filter(u => u.email !== email);
+  localStorage.setItem(KEYS.USERS, JSON.stringify(users));
 };
 
 // ITEM APIS
